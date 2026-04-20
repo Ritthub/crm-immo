@@ -2322,7 +2322,14 @@ function dvfProcessResults(all, codeVoie, nomVoie, sel) {
       if (!m.surface_reelle_bati || parseFloat(m.surface_reelle_bati) === 0) return;
       var mVoie = (m.adresse_nom_voie || '').toUpperCase();
       var mCode = (m.adresse_code_voie || '').toString();
-      var matchVoie = (codeVoie && mCode === codeVoie) || (nomVoie && mVoie.indexOf(nomVoie) >= 0);
+      // Correspondance souple : code voie exact OU nom de voie avec mot-clé principal
+      // Extraire le mot principal de la voie (ignorer RUE, AV, BD, DE, LA, LE, LES...)
+      var stopWords = /^(RUE|AVENUE|AV|BOULEVARD|BD|IMPASSE|ALLEE|PLACE|CHEMIN|ROUTE|DE|DU|LA|LE|LES|D|L|DES|EN|ET|SUR|ST|SAINT|GRANDE|PETIT|PETITE)$/;
+      var nomMots = nomVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
+      var mVoieMots = mVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
+      var matchCode = codeVoie && mCode === codeVoie;
+      var matchNom = nomMots.length > 0 && nomMots.every(function(mot){ return mVoieMots.indexOf(mot) >= 0; });
+      var matchVoie = matchCode || matchNom;
       if (!matchVoie) return;
       var mid = m.id_mutation || (m.date_mutation + '_' + m.valeur_fonciere);
       var tl = m.type_local || '';
