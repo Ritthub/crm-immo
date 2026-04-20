@@ -2620,4 +2620,39 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
+  <script>
+async function testDVFDebug() {
+  var log = document.getElementById('dvf-debug-log');
+  log.textContent = 'Test en cours...\n';
+  var r1 = await fetch(WORKER_URL+'/api/address?q=29+rue+de+Lisbonne+Paris&limit=1', {headers:{'Authorization':'Bearer '+getToken()}});
+  var geo = await r1.json();
+  var f = geo.features && geo.features[0];
+  if (!f) { log.textContent += 'Géocodage échoué\n'; return; }
+  var p = f.properties;
+  log.textContent += 'citycode: ' + p.citycode + '\n';
+  log.textContent += 'id BAN: ' + p.id + '\n';
+  var codeVoie = p.id.split('_')[1];
+  log.textContent += 'codeVoie: ' + codeVoie + '\n\n';
+  log.textContent += 'Interrogation DVF...\n';
+  var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+p.citycode, {headers:{'Authorization':'Bearer '+getToken()}});
+  var sections = await r2.json();
+  log.textContent += 'Sections trouvées: ' + sections.length + '\n';
+  var total = 0;
+  sections.forEach(function(s) {
+    var match = s.mutations.filter(function(m){ return m.adresse_code_voie === codeVoie; });
+    if (match.length > 0) { log.textContent += 'Section ' + s.section + ': ' + match.length + ' transactions\n'; total += match.length; }
+  });
+  log.textContent += 'Total: ' + total + '\n';
+  if (total === 0 && sections.length > 0) {
+    var voies = {};
+    sections[0].mutations.slice(0,5).forEach(function(m){ voies[m.adresse_code_voie] = m.adresse_nom_voie; });
+    log.textContent += '\nExemples codes voie section 1:\n';
+    Object.keys(voies).forEach(function(k){ log.textContent += k+' = '+voies[k]+'\n'; });
+  }
+}
+</script>
+<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid red;padding:12px;border-radius:8px;max-width:400px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+  <button onclick="testDVFDebug()" style="background:red;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%">🔍 Test DVF Debug</button>
+  <pre id="dvf-debug-log" style="font-size:11px;max-height:250px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333"></pre>
+</div>
 </body>
