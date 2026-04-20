@@ -2462,12 +2462,6 @@ function dvfFetch() {
   var parts = banId.split('_');
   var codeVoie = parts.length >= 2 ? parts[1] : '';
   var nomVoie  = (sel.street || '').toUpperCase();
-  var sections = codeCommune === '75117' ? DVF_SECTIONS_75117 : null;
-
-  if (!sections) {
-    showDvfError('Seul Paris 17e est pris en charge pour l\'instant (commune: '+codeCommune+').');
-    return;
-  }
 
   fetch(WORKER_URL+'/api/dvf?commune='+codeCommune, {
     headers:{'Authorization':'Bearer '+getToken()}
