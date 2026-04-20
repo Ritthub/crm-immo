@@ -1458,16 +1458,37 @@ function renderAgencies(){
       reimportBtn.textContent='↺ Réimporter';
       reimportBtn.title='Supprime les annonces de cette agence et relance l\'import';
       reimportBtn.addEventListener('click',(function(agency,btn){return function(){
-        if(!confirm('Supprimer toutes les annonces de "'+agency.name+'" et relancer l\'import ?\n\nCela peut prendre 1-2 minutes.')) return;
+        if(!confirm('Supprimer toutes les annonces de "'+agency.name+'" et relancer l\'import ?\n\nCela peut prendre 30-60 secondes.')) return;
         btn.textContent='⏳ En cours…';
         btn.disabled=true;
         btn.style.color='#999';
-        // Réimport non disponible en version web
-        btn.textContent='⚠️ Non disponible';
-        btn.style.color='#e67700';
-        btn.disabled=false;
-        setTimeout(function(){btn.textContent='↺ Réimporter';btn.style.color='#555';},3000);
-        alert('Le réimport automatique nécessite Google Apps Script.');
+        fetch(WORKER_URL+'/api/reimport', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+          body:JSON.stringify({agency: agency.name})
+        }).then(function(r){return r.json();}).then(function(result){
+          if(result.error){
+            btn.textContent='⚠️ '+result.error;
+            btn.style.color='#e67700';
+            btn.disabled=false;
+            setTimeout(function(){btn.textContent='↺ Réimporter';btn.style.color='#555';},4000);
+          } else if(result.ok){
+            btn.textContent='✅ '+result.added+' annonces';
+            btn.style.color='#22c55e';
+            api('/api/data').then(function(d){ listings=d.listings||[]; renderAll(); });
+            setTimeout(function(){btn.textContent='↺ Réimporter';btn.disabled=false;btn.style.color='#555';},3000);
+          } else {
+            btn.textContent='⚠️ '+(result.message||'Aucune annonce');
+            btn.style.color='#e67700';
+            btn.disabled=false;
+            setTimeout(function(){btn.textContent='↺ Réimporter';btn.style.color='#555';},4000);
+          }
+        }).catch(function(e){
+          btn.textContent='❌ Erreur réseau';
+          btn.style.color='#dc3545';
+          btn.disabled=false;
+          setTimeout(function(){btn.textContent='↺ Réimporter';btn.style.color='#555';},4000);
+        });
       };})(a,reimportBtn));
       card.appendChild(reimportBtn);
     }
