@@ -27,61 +27,7 @@
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
   --transition: 0.18s ease;
 }
-<script>
-async function testDVFDebug() {
-  var log = document.getElementById('dvf-debug-log');
-  log.textContent = 'Test en cours...\n';
-  
-  // Étape 1 : géocoder
-  var r1 = await fetch(WORKER_URL+'/api/address?q=29+rue+de+Lisbonne+Paris&limit=1', {
-    headers:{'Authorization':'Bearer '+getToken()}
-  });
-  var geo = await r1.json();
-  var f = geo.features && geo.features[0];
-  if (!f) { log.textContent += 'Géocodage échoué\n'; return; }
-  var p = f.properties;
-  log.textContent += 'citycode: ' + p.citycode + '\n';
-  log.textContent += 'id BAN: ' + p.id + '\n';
-  var codeVoie = p.id.split('_')[1];
-  log.textContent += 'codeVoie: ' + codeVoie + '\n\n';
-  
-  // Étape 2 : DVF
-  log.textContent += 'Interrogation DVF commune ' + p.citycode + '...\n';
-  var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+p.citycode, {
-    headers:{'Authorization':'Bearer '+getToken()}
-  });
-  var sections = await r2.json();
-  log.textContent += 'Sections avec mutations: ' + sections.length + '\n';
-  
-  // Étape 3 : filtrer par voie
-  var total = 0;
-  sections.forEach(function(s) {
-    var match = s.mutations.filter(function(m){ return m.adresse_code_voie === codeVoie; });
-    if (match.length > 0) {
-      log.textContent += 'Section ' + s.section + ': ' + match.length + ' transactions\n';
-      total += match.length;
-    }
-  });
-  log.textContent += '\nTotal rue Lisbonne: ' + total + '\n';
-  if (total === 0) {
-    // Afficher les premiers codes voie trouvés pour comparer
-    var voies = {};
-    sections.slice(0,5).forEach(function(s){
-      s.mutations.slice(0,3).forEach(function(m){
-        voies[m.adresse_code_voie] = m.adresse_nom_voie;
-      });
-    });
-    log.textContent += '\nExemples de codes voie dans DVF:\n';
-    Object.keys(voies).slice(0,10).forEach(function(k){ log.textContent += k + ' = ' + voies[k] + '\n'; });
-  }
-}
-</script>
 
-<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid red;padding:12px;border-radius:8px;max-width:400px;">
-  <button onclick="testDVFDebug()" style="background:red;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-bottom:8px;">🔍 Test DVF Debug</button>
-  <pre id="dvf-debug-log" style="font-size:11px;max-height:300px;overflow-y:auto;margin:0;white-space:pre-wrap;"></pre>
-</div>
-  
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--surface-2); color: var(--ink); font-size: 15px; min-width: 320px; -webkit-font-smoothing: antialiased; }
 .app { max-width: 960px; margin: 0 auto; padding: 0 0 80px; }
@@ -2620,7 +2566,8 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
-  <script>
+
+<script>
 async function testDVFDebug() {
   var log = document.getElementById('dvf-debug-log');
   log.textContent = 'Test en cours...\n';
@@ -2632,27 +2579,48 @@ async function testDVFDebug() {
   log.textContent += 'citycode: ' + p.citycode + '\n';
   log.textContent += 'id BAN: ' + p.id + '\n';
   var codeVoie = p.id.split('_')[1];
-  log.textContent += 'codeVoie: ' + codeVoie + '\n\n';
+  log.textContent += 'codeVoie BAN: ' + codeVoie + '\n\n';
   log.textContent += 'Interrogation DVF...\n';
   var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+p.citycode, {headers:{'Authorization':'Bearer '+getToken()}});
   var sections = await r2.json();
-  log.textContent += 'Sections trouvées: ' + sections.length + '\n';
+  log.textContent += 'Sections trouvées: ' + sections.length + '\n\n';
+  
+  // Chercher LISBONNE dans toutes les mutations
+  var lisbonne = [];
   var total = 0;
   sections.forEach(function(s) {
-    var match = s.mutations.filter(function(m){ return m.adresse_code_voie === codeVoie; });
-    if (match.length > 0) { log.textContent += 'Section ' + s.section + ': ' + match.length + ' transactions\n'; total += match.length; }
+    s.mutations.forEach(function(m) {
+      if ((m.adresse_nom_voie||'').toUpperCase().indexOf('LISBONNE') >= 0) {
+        lisbonne.push({section: s.section, code: m.adresse_code_voie, nom: m.adresse_nom_voie});
+      }
+      if (m.adresse_code_voie === codeVoie) total++;
+    });
   });
-  log.textContent += 'Total: ' + total + '\n';
-  if (total === 0 && sections.length > 0) {
+  
+  if (lisbonne.length > 0) {
+    log.textContent += 'Rue Lisbonne trouvée dans DVF!\n';
+    log.textContent += 'Code voie DVF: ' + lisbonne[0].code + '\n';
+    log.textContent += 'Code voie BAN: ' + codeVoie + '\n';
+    log.textContent += 'Correspondent: ' + (lisbonne[0].code === codeVoie ? 'OUI ✅' : 'NON ❌') + '\n';
+    log.textContent += 'Transactions avec code BAN: ' + total + '\n';
+  } else {
+    log.textContent += 'Rue Lisbonne ABSENTE de DVF pour 75108\n\n';
+    log.textContent += 'Exemples voies trouvées:\n';
     var voies = {};
-    sections[0].mutations.slice(0,5).forEach(function(m){ voies[m.adresse_code_voie] = m.adresse_nom_voie; });
-    log.textContent += '\nExemples codes voie section 1:\n';
-    Object.keys(voies).forEach(function(k){ log.textContent += k+' = '+voies[k]+'\n'; });
+    sections.slice(0,3).forEach(function(s){
+      s.mutations.slice(0,3).forEach(function(m){
+        voies[m.adresse_code_voie] = m.adresse_nom_voie;
+      });
+    });
+    Object.keys(voies).slice(0,8).forEach(function(k){
+      log.textContent += k + ' = ' + voies[k] + '\n';
+    });
   }
 }
 </script>
-<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid red;padding:12px;border-radius:8px;max-width:400px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-  <button onclick="testDVFDebug()" style="background:red;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%">🔍 Test DVF Debug</button>
-  <pre id="dvf-debug-log" style="font-size:11px;max-height:250px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333"></pre>
+<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid #FF385C;padding:12px;border-radius:12px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:monospace">
+  <button onclick="testDVFDebug()" style="background:#FF385C;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%;font-size:13px">🔍 Test DVF Debug</button>
+  <pre id="dvf-debug-log" style="font-size:11px;max-height:280px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333;line-height:1.5"></pre>
 </div>
+
 </body>
