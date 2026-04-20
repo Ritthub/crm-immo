@@ -2500,7 +2500,15 @@ function renderDvfTable(tableId, countId, mutations, isExact) {
     return;
   }
   cEl.textContent = mutations.length + ' vente' + (mutations.length > 1 ? 's' : '');
-  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
+    + '<colgroup>'
+    + '<col style="width:80px">'   /* Date */
+    + '<col style="width:40px">'   /* N° */
+    + '<col style="width:50px">'   /* m² */
+    + '<col style="width:36px">'   /* Pcs */
+    + '<col style="width:110px">'  /* Prix */
+    + '<col style="width:90px">'   /* €/m² */
+    + '</colgroup>'
     + '<thead><tr style="background:#f8f8f8">'
     + dvfTh('Date', 'date', tableId, countId, isExact)
     + dvfTh('N\u00b0', 'num', tableId, countId, isExact, 'left')
