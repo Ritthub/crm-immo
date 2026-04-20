@@ -426,6 +426,23 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
         <option value="ppm2-desc">m2 desc</option>
       </select>
     </div>
+
+    <!-- Barre d'actions groupées (visible seulement si sélection active) -->
+    <div id="bulk-bar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--primary-light);border-radius:12px;margin-bottom:10px;border:1px solid var(--primary)">
+      <span id="bulk-count" style="font-size:13px;font-weight:600;color:var(--primary)">0 sélectionnées</span>
+      <button class="btn btn-sm" onclick="bulkSelectAll()" style="font-size:12px">✓ Tout sélectionner</button>
+      <button class="btn btn-sm" onclick="bulkDeselectAll()" style="font-size:12px">✕ Tout décocher</button>
+      <select id="bulk-status-select" class="form-input" style="flex:1;min-width:120px;max-width:180px;padding:6px 10px;font-size:13px">
+        <option value="">Changer statut...</option>
+        <option value="A voir">A voir</option>
+        <option value="Visite planifiee">Visite planifiée</option>
+        <option value="Visite">Visite</option>
+        <option value="Coup de coeur">Coup de coeur</option>
+        <option value="Elimine">Elimine</option>
+      </select>
+      <button class="btn btn-primary" onclick="bulkChangeStatus()" style="font-size:12px;padding:6px 12px">Appliquer</button>
+      <button class="btn btn-sm" onclick="bulkDelete()" style="font-size:12px;color:var(--primary);border-color:var(--primary)">🗑 Supprimer</button>
+    </div>
     <div class="filter-bar">
       <span class="filter-label">Statut :</span>
       <label><input type="checkbox" class="status-filter-cb" value="A voir" checked onchange="renderListings()"> A voir</label>
@@ -2271,6 +2288,14 @@ function renderListings(){
     delBtn.style.padding='4px 8px';
     delBtn.textContent='X';
     delBtn.addEventListener('click',(function(s){return function(){deleteListing(s);};})(sid));
+    // Checkbox sélection multiple
+    var cb=document.createElement('input');
+    cb.type='checkbox';
+    cb.className='listing-select-cb';
+    cb.dataset.id=sid;
+    cb.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:var(--primary);flex-shrink:0';
+    cb.addEventListener('change', function(){ updateBulkBar(); });
+    header.appendChild(cb);
     header.appendChild(titleDiv);
     header.appendChild(delBtn);
     content.appendChild(header);
@@ -2330,6 +2355,50 @@ function renderListings(){
     card.appendChild(content);
     container.appendChild(card);
   });
+}
+
+// ── Sélection multiple ───────────────────────────────────────
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.listing-select-cb:checked')).map(function(cb){ return cb.dataset.id; });
+}
+
+function updateBulkBar() {
+  var ids = getSelectedIds();
+  var bar = document.getElementById('bulk-bar');
+  bar.style.display = ids.length > 0 ? 'flex' : 'none';
+  document.getElementById('bulk-count').textContent = ids.length + ' sélectionnée' + (ids.length > 1 ? 's' : '');
+}
+
+function bulkSelectAll() {
+  document.querySelectorAll('.listing-select-cb').forEach(function(cb){ cb.checked = true; });
+  updateBulkBar();
+}
+
+function bulkDeselectAll() {
+  document.querySelectorAll('.listing-select-cb').forEach(function(cb){ cb.checked = false; });
+  updateBulkBar();
+}
+
+function bulkChangeStatus() {
+  var newStatus = document.getElementById('bulk-status-select').value;
+  if (!newStatus) { alert('Choisissez un statut.'); return; }
+  var ids = getSelectedIds();
+  if (!ids.length) return;
+  ids.forEach(function(id) {
+    var l = listings.find(function(x){ return String(x.id) === id; });
+    if (l) l.status = newStatus;
+  });
+  bulkDeselectAll();
+  renderListings(); renderDashSwipe(); scheduleSave();
+}
+
+function bulkDelete() {
+  var ids = getSelectedIds();
+  if (!ids.length) return;
+  if (!confirm('Supprimer ' + ids.length + ' annonce' + (ids.length > 1 ? 's' : '') + ' ?')) return;
+  listings = listings.filter(function(l){ return ids.indexOf(String(l.id)) < 0; });
+  bulkDeselectAll();
+  renderListings(); updateStats(); renderDashSwipe(); scheduleSave();
 }
 
 function deleteListing(id){
