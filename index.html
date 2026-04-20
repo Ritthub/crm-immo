@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Immobilier - Paris 17e</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #FF385C;
+  --primary-dark: #E31C5F;
+  --primary-light: #FFF1F3;
+  --ink: #222222;
+  --ink-light: #717171;
+  --ink-faint: #B0B0B0;
+  --surface: #FFFFFF;
+  --surface-2: #F7F7F7;
+  --border: #EBEBEB;
+  --border-strong: #DDDDDD;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+  --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+  --transition: 0.18s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--surface-2); color: var(--ink); font-size: 15px; min-width: 320px; -webkit-font-smoothing: antialiased; }
+.app { max-width: 960px; margin: 0 auto; padding: 0 0 80px; }
+
+/* ── HEADER ── */
+.header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 12px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+.header-brand { display: flex; align-items: center; gap: 10px; }
+.header-logo { width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+.header h1 { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.header p { font-size: 11px; color: var(--ink-light); margin-top: 1px; }
+.save-badge { font-size: 11px; padding: 5px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; font-weight: 500; flex-shrink: 0; border: 1px solid transparent; }
+.save-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.badge-idle { background: var(--surface-2); color: var(--ink-light); border-color: var(--border); } .badge-idle .dot { background: var(--ink-faint); }
+.badge-saving { background: #FFFBEB; color: #92400E; border-color: #FDE68A; } .badge-saving .dot { background: #F59E0B; }
+.badge-saved { background: #F0FDF4; color: #166534; border-color: #BBF7D0; } .badge-saved .dot { background: #22C55E; }
+.badge-error { background: #FFF1F3; color: #9F1239; border-color: #FECDD3; } .badge-error .dot { background: var(--primary); }
+
+/* ── LOADING ── */
+.loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TABS ── */
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 16px; position: sticky; top: 61px; z-index: 40; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 14px 16px; font-size: 13px; font-weight: 500; background: none; border: none; cursor: pointer; color: var(--ink-light); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; flex-shrink: 0; transition: color var(--transition), border-color var(--transition); letter-spacing: -0.01em; }
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+.section { display: none; padding: 20px; }
+.section.active { display: block; }
+
+/* ── STATS ── */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat { background: var(--surface); border-radius: var(--radius-lg); padding: 16px 18px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: transform var(--transition), box-shadow var(--transition); }
+.stat[onclick] { cursor: pointer; }
+.stat[onclick]:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.stat[onclick]:active { transform: scale(0.98); }
+.stat-label { font-size: 11px; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: -0.03em; }
+
+/* ── DASHBOARD ── */
+.dash-layout { display: flex; flex-direction: column; gap: 20px; }
+.dash-col { width: 100%; }
+.dash-section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em; }
+.count-pill { background: var(--primary); color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+.dash-swipe-card { background: var(--surface); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+.dash-swipe-photo { width: 100%; height: 240px; object-fit: cover; display: block; background: var(--surface-2); }
+.dash-swipe-photo-empty { width: 100%; height: 160px; display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 13px; background: var(--surface-2); }
+.dash-swipe-body { padding: 16px 20px 20px; }
+.dash-swipe-price { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.03em; }
+.dash-swipe-ppm2 { font-size: 12px; color: var(--ink-light); margin-bottom: 8px; font-weight: 500; }
+.dash-swipe-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+.dash-swipe-details { font-size: 12px; color: var(--ink-light); margin-bottom: 16px; }
+.dash-swipe-actions { display: flex; gap: 12px; align-items: center; }
+.dash-swipe-btn { flex: 1; padding: 16px; border-radius: var(--radius-lg); border: 2px solid; cursor: pointer; font-size: 24px; background: var(--surface); display: flex; align-items: center; justify-content: center; transition: transform var(--transition), background var(--transition); box-shadow: var(--shadow-sm); }
+.dash-swipe-btn:active { transform: scale(0.90); }
+.dash-swipe-btn.nope { border-color: #FF3B30; color: #FF3B30; }
+.dash-swipe-btn.nope:hover { background: #FFF1F0; }
+.dash-swipe-btn.skip { flex: 0.6; font-size: 18px; border-color: var(--border-strong); color: var(--ink-faint); }
+.dash-swipe-btn.like { border-color: #34C759; color: #34C759; }
+.dash-swipe-btn.like:hover { background: #F0FDF4; }
+.dash-swipe-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.dash-swipe-nav span { font-size: 12px; color: var(--ink-faint); }
+.dash-swipe-nav a { font-size: 12px; color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 500; }
+.dash-preview-panel { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: var(--surface); flex-direction: column; }
+.dash-preview-panel.open { display: flex; }
+.dash-preview-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--surface); }
+.dash-preview-title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
+.dash-preview-close { background: var(--surface-2); border: none; font-size: 14px; cursor: pointer; color: var(--ink); padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 600; border: 1px solid var(--border); }
+.dash-preview-iframe { flex: 1; border: none; width: 100%; height: 100%; }
+.dash-preview-blocked { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; color: var(--ink-light); font-size: 13px; }
+.dash-done { background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 32px; text-align: center; }
+.dash-done p { font-size: 13px; color: var(--ink-light); margin-top: 8px; }
+
+/* ── LISTING CARDS ── */
+.listing-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 12px; display: flex; align-items: stretch; box-shadow: var(--shadow-sm); transition: box-shadow var(--transition), transform var(--transition); }
+.listing-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.listing-thumb { width: 108px; min-width: 108px; height: 108px; overflow: hidden; background: var(--surface-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.listing-thumb img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; transition: transform 0.3s ease; }
+.listing-thumb img:hover { transform: scale(1.05); }
+.listing-thumb-empty { font-size: 11px; color: var(--ink-faint); text-align: center; padding: 8px; line-height: 1.4; }
+.listing-content { flex: 1; padding: 12px 14px; min-width: 0; }
+.listing-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+.listing-title { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.listing-sub { font-size: 12px; color: var(--ink-light); margin-bottom: 8px; line-height: 1.5; font-weight: 500; }
+.listing-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.listing-desc { font-size: 11px; color: var(--ink-light); margin-top: 8px; line-height: 1.5; border-top: 1px solid var(--border); padding-top: 8px; }
+.listing-date { font-size: 11px; color: var(--ink-faint); padding: 1px 0 4px; }
+
+/* ── FILTER BAR ── */
+.filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; box-shadow: var(--shadow-sm); }
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-bar label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink); cursor: pointer; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
+.filter-bar input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
+.filter-label { font-size: 11px; font-weight: 700; color: var(--ink-faint); white-space: nowrap; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.4px; }
+.filter-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+
+/* ── BADGES ── */
+.badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+.b-gray  { background: var(--surface-2); color: var(--ink-light); border: 1px solid var(--border); }
+.b-blue  { background: #EFF6FF; color: #1D4ED8; }
+.b-green { background: #F0FDF4; color: #166534; }
+.b-amber { background: #FFFBEB; color: #92400E; }
+.b-coral { background: var(--primary-light); color: #9F1239; }
+
+/* ── STATUS SELECT ── */
+.status-select { font-size: 12px; padding: 5px 10px; border-radius: 20px; border: 1.5px solid var(--border-strong); background: var(--surface); cursor: pointer; color: var(--ink); font-family: inherit; max-width: 140px; font-weight: 500; transition: border-color var(--transition); }
+.status-select:focus { outline: none; border-color: var(--primary); }
+.source-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: #EFF6FF; color: #1D4ED8; margin-left: 4px; vertical-align: middle; font-weight: 600; }
+
+/* ── LIGHTBOX ── */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 400; align-items: center; justify-content: center; padding: 16px; }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: var(--radius); }
+.lightbox-close { position: fixed; top: 16px; right: 20px; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 20px; cursor: pointer; z-index: 401; padding: 8px 14px; border-radius: var(--radius-sm); backdrop-filter: blur(10px); font-weight: 600; }
+.lightbox-caption { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500; }
+
+/* ── AGENCIES ── */
+.agency-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.agency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
+.agency-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
+.agency-link { font-size: 12px; color: var(--primary); text-decoration: none; word-break: break-all; font-weight: 500; }
+.agency-link:hover { text-decoration: underline; }
+
+/* ── TOOLBAR ── */
+.toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+
+/* ── BUTTONS ── */
+.btn { padding: 10px 20px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-strong); background: var(--surface); cursor: pointer; font-size: 14px; color: var(--ink); font-weight: 600; font-family: inherit; transition: background var(--transition), border-color var(--transition), transform var(--transition); letter-spacing: -0.01em; }
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(255,56,92,0.30); }
+.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.btn-sm { padding: 7px 14px; font-size: 12px; border-radius: var(--radius-sm); }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; color: var(--ink); margin-bottom: 6px; display: block; font-weight: 600; }
+.form-input { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 16px; background: var(--surface); color: var(--ink); font-family: inherit; -webkit-appearance: none; transition: border-color var(--transition), box-shadow var(--transition); }
+.form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,56,92,0.12); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── MODALS ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 24px 24px 0 0; padding: 24px 20px 32px; width: 100%; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 -8px 40px rgba(0,0,0,0.18); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-title { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
+.modal-close { background: var(--surface-2); border: 1px solid var(--border); font-size: 16px; cursor: pointer; color: var(--ink-light); padding: 6px 12px; border-radius: var(--radius-sm); line-height: 1; font-weight: 600; }
+
+/* ── CRITERIA ── */
+.criteria-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+.criteria-key { font-size: 13px; color: var(--ink-light); font-weight: 500; }
+.criteria-val { font-size: 13px; font-weight: 600; text-align: right; color: var(--ink); }
+
+/* ── VISITS ── */
+.stars { color: var(--primary); }
+.visit-note { font-size: 12px; color: var(--ink-light); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.6; }
+.empty { text-align: center; padding: 48px 20px; color: var(--ink-faint); font-size: 14px; font-weight: 500; }
+
+/* ── SLIDESHOW ── */
+.slideshow { position: relative; width: 108px; min-width: 108px; height: 108px; flex-shrink: 0; background: var(--surface-2); overflow: hidden; }
+.slideshow img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+.slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); border: none; color: white; font-size: 13px; padding: 5px 7px; cursor: pointer; z-index: 2; line-height: 1; transition: background var(--transition); }
+.slide-btn:hover { background: rgba(0,0,0,0.75); }
+.slide-btn.prev { left: 0; border-radius: 0 4px 4px 0; }
+.slide-btn.next { right: 0; border-radius: 4px 0 0 4px; }
+.slide-counter { position: absolute; bottom: 4px; right: 4px; font-size: 9px; background: rgba(0,0,0,0.55); color: white; padding: 2px 5px; border-radius: 8px; font-weight: 600; }
+
+/* ── AGENCY DROPDOWN ── */
+.agency-dropdown { position: relative; flex-shrink: 0; }
+.agency-dropdown-btn { background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: var(--radius-sm); padding: 7px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink); transition: border-color var(--transition); }
+.agency-dropdown-btn:hover { border-color: var(--ink); }
+.agency-dropdown-menu { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); z-index: 9999; min-width: 220px; max-height: 300px; overflow-y: auto; padding: 8px 0; }
+.agency-dropdown-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 13px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--transition); }
+.agency-dropdown-item:hover { background: var(--surface-2); }
+.agency-dropdown-item input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
+
+/* ── RDV CARDS ── */
+.rdv-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-sm); transition: transform var(--transition); }
+.rdv-card:hover { transform: translateY(-1px); }
+.rdv-date { background: var(--ink); color: white; border-radius: var(--radius-sm); padding: 8px 12px; text-align: center; flex-shrink: 0; min-width: 48px; }
+.rdv-day { font-size: 20px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.rdv-month { font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; }
+.rdv-body { flex: 1; min-width: 0; }
+.rdv-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rdv-sub { font-size: 12px; color: var(--ink-light); margin-top: 3px; }
+.rdv-urgent { border-color: #FECDD3; background: #FFF1F3; }
+.rdv-urgent .rdv-date { background: var(--primary); }
+
+/* ── RESPONSIVE ── */
+@media (min-width: 640px) {
+  .section { padding: 24px 28px; }
+  .stats { grid-template-columns: repeat(4, 1fr); }
+  .agency-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .listing-thumb, .slideshow { width: 120px; min-width: 120px; height: 120px; }
+}
+@media (min-width: 768px) {
+  .tabs { padding: 0 28px; top: 65px; }
+  .header { padding: 18px 28px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">x</button>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--ink-light)">Chargement...</div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--surface-2);padding:20px;">
+  <div style="background:white;border-radius:24px;padding:40px 32px;width:100%;max-width:380px;box-shadow:var(--shadow-lg);border:1px solid var(--border);">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:56px;height:56px;background:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;">🏠</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:var(--ink)">CRM Immobilier</div>
+      <div style="font-size:13px;color:var(--ink-light);margin-top:4px;">Paris 17e · Accès privé</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="login-email" type="email" placeholder="vous@email.com" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input class="form-input" id="login-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="display:none;color:var(--primary);font-size:13px;margin-bottom:12px;font-weight:500;"></div>
+    <button id="login-btn" class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:14px;font-size:15px;border-radius:12px;">Se connecter</button>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">🏠</div>
+      <div>
+        <h1>CRM Immobilier</h1>
+        <p>Paris 17e · Sauvegarde Drive</p>
+      </div>
+    </div>
+    <div class="save-badge badge-idle" id="save-badge">
+      <div class="dot"></div>
+      <span id="save-text">Prêt</span>
+    </div>
+    <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--ink-light);cursor:pointer;font-weight:500;">Déconnexion</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')">Accueil</button>
+    <button class="tab" onclick="showTab('agencies')">Agences</button>
+    <button class="tab" onclick="showTab('listings')">Annonces</button>
+    <button class="tab" onclick="showTab('visits')">Visites</button>
+    <button class="tab" onclick="showTab('criteria')">Ma recherche</button>
+    <button class="tab" onclick="showTab('dvf')">📊 Prix du marché</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="section active">
+    <div class="stats">
+      <div class="stat" onclick="showTab('agencies')">
+        <div class="stat-label">Agences</div><div class="stat-value">31</div>
+      </div>
+      <div class="stat" onclick="showTab('listings')">
+        <div class="stat-label">Annonces</div><div class="stat-value" id="s-listings">0</div>
+      </div>
+      <div class="stat" onclick="showTab('visits')">
+        <div class="stat-label">Visites</div><div class="stat-value" id="s-visits">0</div>
+      </div>
+      <div class="stat" onclick="showTab('criteria')">
+        <div class="stat-label">Budget</div><div class="stat-value" style="font-size:14px;margin-top:3px">1,25M</div>
+      </div>
+    </div>
+
+    <div class="dash-layout">
+
+      <!-- RDV A VENIR -->
+      <div class="dash-col" id="dash-rdv-wrap" style="display:none">
+        <div class="dash-section-title">
+          Rendez-vous a venir
+          <span class="count-pill" id="dash-rdv-count">0</span>
+        </div>
+        <div id="dash-rdv"></div>
+      </div>
+
+      <!-- DERNIERES VISITES -->
+      <div class="dash-col">
+        <div class="dash-section-title">Dernieres visites</div>
+        <div id="dash-visits"><div class="empty">Aucune visite.</div></div>
+      </div>
+
+      <!-- NOUVELLES ANNONCES -->
+      <div class="dash-col">
+        <div class="dash-section-title">
+          Nouvelles annonces
+          <span class="count-pill" id="dash-disc-count" style="display:none">0</span>
+        </div>
+        <div id="dash-swipe-wrap">
+          <div class="dash-swipe-card" id="dash-swipe-card" style="display:none">
+            <div id="dash-photo"></div>
+            <div class="dash-swipe-body">
+              <div class="dash-swipe-price"   id="dash-price"></div>
+              <div class="dash-swipe-ppm2"    id="dash-ppm2"></div>
+              <div class="dash-swipe-title"   id="dash-title"></div>
+              <div class="dash-swipe-details" id="dash-details"></div>
+              <div class="dash-swipe-actions">
+                <button class="dash-swipe-btn nope" onclick="dashSwipeLeft()">X</button>
+                <button class="dash-swipe-btn skip" onclick="dashSwipeSkip()">-</button>
+                <button class="dash-swipe-btn like" onclick="dashSwipeRight()">&#9829;</button>
+              </div>
+              <div class="dash-swipe-nav">
+                <span id="dash-progress"></span>
+                <a id="dash-preview-toggle" onclick="toggleDashPreview()" style="display:none">Voir l'annonce</a>
+              </div>
+            </div>
+          </div>
+          <div class="dash-preview-panel" id="dash-preview">
+            <div class="dash-preview-header">
+              <span class="dash-preview-title" id="dash-preview-title"></span>
+              <button class="dash-preview-close" onclick="closeDashPreview()">x</button>
+            </div>
+            <iframe class="dash-preview-iframe" id="dash-preview-iframe" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+            <div class="dash-preview-blocked" id="dash-preview-blocked" style="display:none">
+              <div>Apercu non disponible sur ce site.</div>
+              <a id="dash-preview-link" href="#" target="_blank" class="btn btn-primary" style="text-decoration:none;margin-top:4px">Ouvrir dans un nouvel onglet</a>
+            </div>
+          </div>
+          <div class="dash-done" id="dash-done" style="display:none">
+            <p>Toutes les annonces ont ete traitees.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AGENCES -->
+  <div id="agencies" class="section">
+    <div class="toolbar">
+      <input class="form-input" id="ag-search" placeholder="Rechercher..." style="flex:1;min-width:0" oninput="renderAgencies()">
+      <select class="form-input" id="ag-filter" style="width:140px" onchange="renderAgencies()">
+        <option value="">Toutes</option>
+        <option>Generaliste</option><option>Luxe</option><option>En ligne</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddAgency()">+ Agence</button>
+    </div>
+    <div id="ag-add-panel" style="display:none;background:white;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Ajouter une agence</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input class="form-input" id="ag-new-url" placeholder="https://www.agence.fr" type="url" style="flex:2;min-width:200px">
+        <select class="form-input" id="ag-new-cat" style="flex:1;min-width:120px">
+          <option value="Generaliste">Generaliste</option>
+          <option value="Luxe">Luxe</option>
+          <option value="En ligne">En ligne</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="ag-add-btn">Trouver le nom</button>
+        <button class="btn btn-sm" onclick="closeAddAgency()">Annuler</button>
+      </div>
+      <div id="ag-add-status" style="font-size:12px;color:#888;margin-top:8px;display:none;"></div>
+      <div id="ag-add-confirm" style="display:none;margin-top:10px;padding:10px;background:#f5f5f0;border-radius:8px;">
+        <div style="font-size:13px;margin-bottom:8px;">Nom detecte : <strong id="ag-detected-name"></strong></div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="ag-confirm-name" placeholder="Modifier si besoin" style="flex:1;padding:8px 12px;font-size:14px">
+          <button class="btn btn-primary btn-sm" id="ag-confirm-btn">Ajouter</button>
+        </div>
+      </div>
+    </div>
+    <div class="agency-grid" id="ag-grid"></div>
+  </div>
+
+  <!-- ANNONCES -->
+  <div id="listings" class="section">
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="openModal('m-listing')">+ Nouvelle annonce</button>
+      <select class="form-input" id="l-sort" style="flex:1;min-width:0" onchange="renderListings()">
+        <option value="">Trier par...</option>
+        <option value="date-desc" selected>Date recente</option>
+        <option value="date-asc">Date ancienne</option>
+        <option value="price-asc">Prix asc</option>
+        <option value="price-desc">Prix desc</option>
+        <option value="surface-asc">Surface asc</option>
+        <option value="surface-desc">Surface desc</option>
+        <option value="ppm2-asc">m2 asc</option>
+        <option value="ppm2-desc">m2 desc</option>
+      </select>
+    </div>
+    <div class="filter-bar">
+      <span class="filter-label">Statut :</span>
+      <label><input type="checkbox" class="status-filter-cb" value="A voir" checked onchange="renderListings()"> A voir</label>
+      <label><input type="checkbox" class="status-filter-cb" value="Visite planifiee" checked onchange="renderListings()"> Planifiee</label>
+      <label><input type="checkbox" class="status-filter-cb" value="Visite" checked onchange="renderListings()"> Visite</label>
+      <label><input type="checkbox" class="status-filter-cb" value="Coup de coeur" checked onchange="renderListings()"> Coup de coeur</label>
+      <label><input type="checkbox" class="status-filter-cb" value="Elimine" onchange="renderListings()"> Elimine</label>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Agences :</span>
+      <div class="agency-dropdown" id="agency-dropdown-wrap">
+        <button class="agency-dropdown-btn" id="agency-dropdown-btn" onclick="toggleAgencyDropdown(event)">
+          Toutes <span id="agency-filter-count" style="display:none" class="count-pill">0</span> &#9660;
+        </button>
+        <div class="agency-dropdown-menu" id="agency-dropdown-menu" style="display:none">
+          <label class="agency-dropdown-item">
+            <input type="checkbox" id="agency-all" checked onchange="toggleAllAgencies(this)"> Toutes les agences
+          </label>
+          <div class="filter-sep" style="margin:4px 0;width:100%;height:1px"></div>
+          <div id="agency-checkboxes"></div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-bar" id="criteria-bar" style="flex-wrap:wrap;gap:8px;">
+      <span class="filter-label">Ma recherche :</span>
+      <div id="criteria-bar-content" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;"></div>
+      <button onclick="resetAllFilters()" style="margin-left:auto;padding:4px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:12px;color:#666;white-space:nowrap;" title="Réinitialiser tous les filtres">&#x21BA; Réinitialiser</button>
+    </div>
+    <div id="criteria-inline-editor" style="display:none;background:white;border:1px solid #e8e8e8;border-radius:12px;padding:12px 14px;margin-bottom:10px;"></div>
+    <div style="font-size:12px;color:#888;margin-bottom:8px;padding-left:2px"><span id="listings-count">0</span> annonce(s) correspondent aux criteres</div>
+    <div id="listings-list"><div class="empty">Aucune annonce.</div></div>
+  </div>
+
+  <!-- VISITES -->
+  <div id="visits" class="section">
+    <div class="toolbar">
+      <input class="form-input" id="vi-search" placeholder="Rechercher..." style="flex:1;min-width:0" oninput="renderVisits()">
+      <select class="form-input" id="vi-agency-filter" style="width:160px" onchange="renderVisits()">
+        <option value="">Toutes les agences</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('m-visit')">+ Nouvelle visite</button>
+    </div>
+    <div id="visits-list"><div class="empty">Aucune visite.</div></div>
+  </div>
+
+  <!-- CRITERES -->
+  <div id="criteria" class="section">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Ma recherche</div>
+        <button class="btn btn-sm" onclick="openModal('m-criteria')">Modifier</button>
+      </div>
+      <div id="criteria-display"></div>
+    </div>
+  </div>
+
+  <!-- ONGLET DVF -->
+  <div id="dvf" class="section">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title" style="margin-bottom:12px">🔍 Rechercher une adresse</div>
+      <div style="position:relative">
+        <input class="form-input" id="dvf-input" placeholder="Ex : 12 rue Legendre Paris 17" autocomplete="off"
+          oninput="dvfAutocomplete(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();dvfSearch();}"
+          style="padding-right:44px">
+        <button onclick="dvfSearch()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:#1a1a1a;color:white;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:13px">→</button>
+        <div id="dvf-suggestions" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:100;background:white;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <div id="dvf-results" style="display:none">
+      <!-- Résumé adresse -->
+      <div id="dvf-address-bar" style="background:#f0f4ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#444"></div>
+
+      <!-- Tableau adresse exacte -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header" style="margin-bottom:8px">
+          <div class="card-title" style="font-size:14px">📍 Transactions à cette adresse</div>
+          <span id="dvf-exact-count" class="badge b-gray"></span>
+        </div>
+        <div id="dvf-exact-table"></div>
+      </div>
+
+      <!-- Tableau même rue -->
+      <div class="card">
+        <div class="card-header" style="margin-bottom:8px">
+          <div class="card-title" style="font-size:14px">🏘️ Autres ventes dans la rue <span id="dvf-street-label" style="font-weight:400;color:#888;font-size:12px"></span></div>
+          <span id="dvf-street-count" class="badge b-gray"></span>
+        </div>
+        <div id="dvf-street-table"></div>
+      </div>
+    </div>
+
+    <div id="dvf-loading" style="display:none;text-align:center;padding:2rem;color:#888;font-size:14px">
+      <div class="spinner" style="margin:0 auto 12px"></div>Recherche en cours…
+    </div>
+    <div id="dvf-error" style="display:none;padding:1rem;color:#dc3545;font-size:13px;background:#fff0f0;border-radius:8px;margin-top:8px"></div>
+  </div>
+
+<!-- MODAL: Nouvelle annonce -->
+<div class="modal-overlay" id="m-listing">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouvelle annonce</div><button class="modal-close" onclick="closeModal('m-listing')">✕</button></div>
+
+    <!-- Étape 0 : URL -->
+    <div id="li-step-url">
+      <div class="form-group">
+        <label class="form-label">Lien de l'annonce</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="li-url-input" placeholder="https://www.seloger.com/..." type="url" style="flex:1" onkeydown="if(event.key==='Enter')analyzeListing()">
+          <button class="btn btn-primary" id="li-analyze-btn" onclick="analyzeListing()" style="white-space:nowrap">✦ Analyser</button>
+        </div>
+      </div>
+      <div id="li-analyze-status" style="display:none;font-size:12px;color:#888;margin-bottom:10px;text-align:center"></div>
+      <div style="text-align:center;margin:4px 0 10px">
+        <button class="btn" onclick="showListingForm()" style="font-size:12px;color:#888;background:none;border:none;text-decoration:underline;cursor:pointer">Remplir manuellement →</button>
+      </div>
+    </div>
+
+    <!-- Étape 1 : Formulaire (masqué jusqu'à analyse) -->
+    <div id="li-step-form" style="display:none">
+      <div id="li-photos-preview" style="display:none;margin-bottom:12px;overflow-x:auto;white-space:nowrap"></div>
+      <div class="form-group"><label class="form-label">Adresse / titre *</label><input class="form-input" id="li-title" placeholder="ex: 3 pieces rue Levis 75017"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prix</label><input class="form-input" id="li-price" placeholder="850000" type="number" inputmode="numeric"></div>
+        <div class="form-group"><label class="form-label">Surface m²</label><input class="form-input" id="li-surface" placeholder="65" type="number" inputmode="numeric"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Pièces</label><input class="form-input" id="li-rooms" placeholder="3" type="number" inputmode="numeric"></div>
+        <div class="form-group"><label class="form-label">Étage</label><input class="form-input" id="li-floor" placeholder="2"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Agence</label><select class="form-input" id="li-agency"></select></div>
+        <div class="form-group"><label class="form-label">Statut</label>
+          <select class="form-input" id="li-status"><option>A voir</option><option>Visite planifiee</option><option>Visite</option><option>Coup de coeur</option><option>Elimine</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Lien de l'annonce</label><input class="form-input" id="li-url" placeholder="https://" type="url"></div>
+      <div class="form-group"><label class="form-label">URL photo principale</label><input class="form-input" id="li-photo" placeholder="https://" type="url"></div>
+      <div class="form-group" id="li-photos-extra-group" style="display:none"><label class="form-label">Photos supplémentaires (URLs, une par ligne)</label><textarea class="form-input" id="li-photos-extra" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="li-notes" rows="3" placeholder="Impressions..."></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn" onclick="closeModal('m-listing')">Annuler</button>
+        <button class="btn btn-primary" onclick="saveListing()">Enregistrer</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: Nouvelle visite -->
+<div class="modal-overlay" id="m-visit">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouvelle visite</div><button class="modal-close" onclick="closeModal('m-visit')">x</button></div>
+    <div class="form-group"><label class="form-label">Annonce visitee</label><select class="form-input" id="vi-listing"><option value="">-- Selectionner --</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="vi-date"></div>
+      <div class="form-group"><label class="form-label">Note</label>
+        <select class="form-input" id="vi-rating">
+          <option value="5">5 etoiles</option><option value="4">4 etoiles</option>
+          <option value="3" selected>3 etoiles</option><option value="2">2 etoiles</option><option value="1">1 etoile</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Agent rencontre</label><input class="form-input" id="vi-agent" placeholder="Nom, telephone..."></div>
+    <div class="form-group"><label class="form-label">Compte-rendu</label><textarea class="form-input" id="vi-notes" rows="4" placeholder="Points positifs, negatifs..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" onclick="closeModal('m-visit')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveVisit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Criteres -->
+<div class="modal-overlay" id="m-criteria">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Ma recherche</div><button class="modal-close" onclick="closeModal('m-criteria')">x</button></div>
+    <div class="form-group"><label class="form-label">Localisation</label><input class="form-input" id="cr-loc" placeholder="Paris 17e, 8e"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Budget min</label><input class="form-input" id="cr-budget-min" placeholder="0" type="number" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Budget max</label><input class="form-input" id="cr-budget" placeholder="1250000" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Surface min m²</label><input class="form-input" id="cr-surface" placeholder="60" type="number" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Surface max m²</label><input class="form-input" id="cr-surface-max" placeholder="200" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Pieces min</label><input class="form-input" id="cr-rooms" placeholder="3" type="number" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Etage min</label><input class="form-input" id="cr-floor" placeholder="2" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Indispensables</label><textarea class="form-input" id="cr-must" rows="2" placeholder="ascenseur, gardien..."></textarea></div>
+    <div class="form-group"><label class="form-label">Souhaitables</label><textarea class="form-input" id="cr-nice" rows="2" placeholder="parquet, balcon..."></textarea></div>
+    <div class="form-group"><label class="form-label">Redhibitoires</label><textarea class="form-input" id="cr-no" rows="2" placeholder="vis-a-vis, bruit..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" onclick="closeModal('m-criteria')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCriteria()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Liste par defaut - sert uniquement au premier chargement
+// Apres, c'est Drive qui fait foi
+var DEFAULT_AGENCIES = [
+  {name:"Leon Immobilier",              cat:"Generaliste", url:"https://leonimmobilier.fr",                 synced:true},
+  {name:"Les Loges Immobilier",         cat:"Generaliste", url:"https://www.lesloges-immobilier.com",       synced:true},
+  {name:"Sophie Boidana Immobilier",    cat:"Generaliste", url:"https://boidana-immobilier.com",            synced:true},
+  {name:"Christophe Crepet Immobilier", cat:"Generaliste", url:"https://www.christophecrepetimmobilier.fr", synced:false},
+  {name:"Authentic Immobilier",         cat:"Generaliste", url:"https://authentic-immobilier.com",          synced:true},
+  {name:"FREDELION Ternes",             cat:"Generaliste", url:"https://paris-17-ternes.fredelion.com",     synced:true},
+  {name:"Maya Invest Immo",             cat:"Generaliste", url:"https://www.mayainvestimmo.com",            synced:true},
+  {name:"La Famille Immobilier",        cat:"Generaliste", url:"https://www.lafamilleimmobilier.fr",        synced:false},
+  {name:"L'Agence Les Enfants Rouges",  cat:"Generaliste", url:"https://www.agencedesenfantsrouges.com",   synced:true},
+  {name:"Obriane Immobilier", cat:"Generaliste", url:"https://obriane.com/fr/ventes", synced:true},
+    {name:"Costier Immobilier", cat:"Generaliste", url:"https://www.costier-immobilier.com/vente/appartement/paris/75017", synced:false, blocked:true, blockedReason:"Site React dynamique — import via bookmarklet (voir import-foncia.html)"},
+    {name:"Foncia", cat:"Generaliste", url:"https://fr.foncia.com/achat/paris-75017/appartement", synced:false, blocked:true, blockedReason:"Site bloque le scraping automatique (403). Import manuel via bouton 'Importer JSON'."},
+    {name:"Moriss Immobilier",            cat:"Generaliste", url:"https://www.morissimmobilier.com",          synced:false},
+  {name:"7e Rive",                      cat:"Generaliste", url:"https://www.7erive.com",                   synced:false},
+  {name:"Foncia Paris 17",              cat:"Generaliste", url:"https://www.foncia.com",                   synced:false},
+  {name:"Saint Ferdinand Immobilier",   cat:"Generaliste", url:"https://www.agencessaintferdinand.com",    synced:true},
+  {name:"Laforet",                      cat:"Generaliste", url:"https://www.laforet.com",                  synced:false},
+  {name:"Vestia Immo",                  cat:"Generaliste", url:"https://vestia-immo.fr",                   synced:false},
+  {name:"Nestenn Paris 17",             cat:"Generaliste", url:"https://immobilier-paris-17.nestenn.com",  synced:false},
+  {name:"ARTIS Patrimoine",             cat:"Generaliste", url:"https://www.artispatrimoine.com",           synced:false},
+  {name:"PROCITY Immobilier",           cat:"Generaliste", url:"https://www.procityimmobilier.com",         synced:false},
+  {name:"Costier Immobilier",           cat:"Generaliste", url:"https://www.costier-immobilier.com",        synced:false},
+  {name:"Steward Immobilier",           cat:"Generaliste", url:"https://www.seloger.com/professionnels/agences-immobilieres/paris-17eme-arrondissement-75017/agence-630097/", synced:false},
+  {name:"IAD",                          cat:"En ligne",    url:"https://www.iadfrance.fr",                 synced:false},
+  {name:"Hosman",                       cat:"En ligne",    url:"https://www.hosman.co",                    synced:false},
+  {name:"Imop",                         cat:"En ligne",    url:"https://www.imop.fr",                      synced:false},
+  {name:"Imkiz",                        cat:"En ligne",    url:"https://www.imkiz.com",                    synced:false},
+  {name:"Emile Garcin",                 cat:"Luxe",        url:"https://www.emilegarcin.com",              synced:false},
+  {name:"KTS Immobilier Parisien",      cat:"Luxe",        url:"https://www.ktsimmobilier.com",            synced:false},
+  {name:"MONCIM",                       cat:"Luxe",        url:"https://www.moncim.fr",                    synced:false},
+  {name:"FREDELION Villiers",           cat:"Generaliste", url:"https://paris-17-villiers.fredelion.com",  synced:true},
+];
+
+// AGENCIES est initialise au chargement depuis Drive (voir getData)
+var AGENCIES = [];
+
+const WORKER_URL = 'https://blue-forest-3637.wedding-ferreira-ritter.workers.dev';
+
+// ── API HELPERS ──────────────────────────────────────────────
+function getToken() { return localStorage.getItem('crm_token') || ''; }
+function setToken(t) { localStorage.setItem('crm_token', t); }
+function clearToken() { localStorage.removeItem('crm_token'); }
+
+async function api(path, method, body) {
+  var opts = {
+    method: method || 'GET',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }
+  };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  var r = await fetch(WORKER_URL + path, opts);
+  return r.json();
+}
+
+const listingUrls={}, listingPhotos={};
+var slideIndexes={};
+function getPhotos(l){
+  if(l.photos&&l.photos.length>0) return l.photos;
+  if(l.photo) return [l.photo];
+  return [];
+}
+function slidePhoto(sid,dir){
+  var l=listings.find(function(x){return String(x.id)===sid;});
+  if(!l) return;
+  var photos=getPhotos(l);
+  if(photos.length<=1) return;
+  slideIndexes[sid]=(((slideIndexes[sid]||0)+dir)+photos.length)%photos.length;
+  var img=document.getElementById('simg-'+sid);
+  var ctr=document.getElementById('sctr-'+sid);
+  if(img) img.src=photos[slideIndexes[sid]];
+  if(ctr) ctr.textContent=(slideIndexes[sid]+1)+'/'+photos.length;
+}
+let listings=[], visits=[], criteria={location:'Paris 17e, 75008',budget:'1250000',surface:'',rooms:'',floor:'',must:'',nice:'',no:''};
+let saveTimer=null, dashQueue=[], dashIdx=0;
+
+function getDashQueue(){ return listings.filter(l=>l.status==='A voir' && matchesCriteria(l)); }
+
+function updateDashCounter(){
+  const q=getDashQueue();
+  const pill=document.getElementById('dash-disc-count');
+  pill.textContent=q.length;
+  pill.style.display=q.length>0?'inline-block':'none';
+}
+
+function renderDashSwipe(){
+  dashQueue=getDashQueue();
+  const card=document.getElementById('dash-swipe-card');
+  const done=document.getElementById('dash-done');
+  updateDashCounter();
+  if(dashQueue.length===0){ card.style.display='none'; done.style.display='block'; return; }
+  done.style.display='none'; card.style.display='block';
+  if(dashIdx>=dashQueue.length) dashIdx=0;
+  showDashCard();
+}
+
+function showDashCard(){
+  closeDashPreview();
+  dashQueue=getDashQueue();
+  updateDashCounter();
+  const card=document.getElementById('dash-swipe-card');
+  const done=document.getElementById('dash-done');
+  if(dashQueue.length===0){ card.style.display='none'; done.style.display='block'; return; }
+  if(dashIdx>=dashQueue.length) dashIdx=0;
+  card.style.display='block'; done.style.display='none';
+  const l=dashQueue[dashIdx];
+  if(l.url) listingUrls[String(l.id)]=l.url;
+  if(l.photo) listingPhotos[String(l.id)]=l.photo;
+  const photoEl=document.getElementById('dash-photo');
+  photoEl.innerHTML=l.photo
+    ?'<img class="dash-swipe-photo" src="'+l.photo+'" alt="" onerror="this.outerHTML=\'<div class=\\\'dash-swipe-photo-empty\\\'>Pas de photo</div>\'">'
+    :'<div class="dash-swipe-photo-empty">Pas de photo</div>';
+  const price=parseInt(l.price)||0, surf=parseInt(l.surface)||0;
+  const ppm2=(price&&surf)?Math.round(price/surf).toLocaleString('fr-FR')+' euros/m2':'';
+  document.getElementById('dash-price').textContent=price?price.toLocaleString('fr-FR')+' euros':'Prix non renseigne';
+  document.getElementById('dash-ppm2').textContent=ppm2;
+  document.getElementById('dash-title').textContent=l.title;
+  document.getElementById('dash-details').textContent=[l.agency,l.rooms?l.rooms+' pieces':'',l.surface?l.surface+' m2':'',l.floor?'Etage '+l.floor:''].filter(Boolean).join(' - ');
+  document.getElementById('dash-progress').textContent=(dashIdx+1)+' / '+dashQueue.length;
+  const toggle=document.getElementById('dash-preview-toggle');
+  toggle.style.display=l.url?'inline':'none';
+  toggle.textContent='Voir l\'annonce';
+}
+
+function dashSwipeLeft(){
+  if(dashIdx>=dashQueue.length) return;
+  const id=dashQueue[dashIdx].id;
+  const orig=listings.find(x=>String(x.id)===String(id));
+  if(orig) orig.status='Elimine';
+  scheduleSave(); updateStats();
+  dashQueue=getDashQueue();
+  if(dashIdx>=dashQueue.length) dashIdx=Math.max(0,dashQueue.length-1);
+  showDashCard();
+}
+
+function dashSwipeRight(){
+  if(dashIdx>=dashQueue.length) return;
+  const id=dashQueue[dashIdx].id;
+  const orig=listings.find(x=>String(x.id)===String(id));
+  if(orig) orig.status='Coup de coeur';
+  scheduleSave(); updateStats();
+  dashQueue=getDashQueue();
+  if(dashIdx>=dashQueue.length) dashIdx=Math.max(0,dashQueue.length-1);
+  showDashCard();
+}
+
+function dashSwipeSkip(){
+  if(dashIdx>=dashQueue.length) return;
+  dashIdx++; if(dashIdx>=dashQueue.length) dashIdx=0;
+  showDashCard();
+}
+
+var touchStartX=0, touchStartY=0;
+document.addEventListener('touchstart',function(e){
+  var card=document.getElementById('dash-swipe-card');
+  if(card&&card.contains(e.target)){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;}
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  var card=document.getElementById('dash-swipe-card');
+  if(!card||!card.contains(e.target)) return;
+  var dx=e.changedTouches[0].clientX-touchStartX;
+  var dy=Math.abs(e.changedTouches[0].clientY-touchStartY);
+  if(Math.abs(dx)>50&&dy<80){if(dx<0)dashSwipeLeft();else dashSwipeRight();}
+},{passive:true});
+
+function toggleDashPreview(){
+  var panel=document.getElementById('dash-preview');
+  if(panel.classList.contains('open')){closeDashPreview();return;}
+  if(dashIdx>=dashQueue.length) return;
+  var l=dashQueue[dashIdx];
+  var url=listingUrls[String(l.id)]||l.url;
+  if(!url) return;
+  var iframe=document.getElementById('dash-preview-iframe');
+  var blocked=document.getElementById('dash-preview-blocked');
+  var link=document.getElementById('dash-preview-link');
+  var title=document.getElementById('dash-preview-title');
+  var toggle=document.getElementById('dash-preview-toggle');
+  panel.classList.add('open');
+  title.textContent=l.title.length>40?l.title.substring(0,40)+'...':l.title;
+  link.href=url; toggle.textContent='Fermer';
+  iframe.style.display='block'; blocked.style.display='none';
+  iframe.src=url;
+  var loaded=false;
+  iframe.onload=function(){loaded=true;};
+  setTimeout(function(){if(!loaded){iframe.style.display='none';blocked.style.display='flex';}},4000);
+}
+
+function closeDashPreview(){
+  var panel=document.getElementById('dash-preview');
+  var iframe=document.getElementById('dash-preview-iframe');
+  var toggle=document.getElementById('dash-preview-toggle');
+  panel.classList.remove('open'); iframe.src='';
+  if(toggle) toggle.textContent='Voir l\'annonce';
+}
+
+function openLightbox(id,caption){
+  var url=listingPhotos[id];if(!url)return;
+  document.getElementById('lightbox-img').src=url;
+  document.getElementById('lightbox-caption').textContent=caption||'';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightbox-img').src='';
+}
+function openLink(id){var url=listingUrls[id];if(url)window.open(url,'_blank');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
+
+function setSaveBadge(state,text){
+  var b=document.getElementById('save-badge');
+  b.className='save-badge badge-'+state;
+  document.getElementById('save-text').textContent=text;
+}
+
+window.onload = async function() {
+  // Vérifier si connecté
+  if (getToken()) {
+    var me = await api('/api/auth/me');
+    if (me.error) { clearToken(); showLogin(); return; }
+    loadApp();
+  } else {
+    showLogin();
+  }
+};
+
+function showLogin() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var password = document.getElementById('login-password').value;
+  var btn = document.getElementById('login-btn');
+  var err = document.getElementById('login-error');
+  if (!email || !password) { err.textContent = 'Remplissez email et mot de passe.'; err.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  var r = await fetch(WORKER_URL + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  });
+  var d = await r.json();
+  if (!r.ok || d.error) {
+    err.textContent = d.error || 'Erreur de connexion.';
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Se connecter';
+    return;
+  }
+  setToken(d.token);
+  document.getElementById('login-screen').style.display = 'none';
+  loadApp();
+}
+
+function doLogout() {
+  clearToken();
+  location.reload();
+}
+
+async function loadApp() {
+  renderCriteria();
+  try {
+    var d = await api('/api/data');
+    listings = d.listings || [];
+    visits = d.visits || [];
+    if (d.criteria) criteria = d.criteria;
+    if (d.agencies && d.agencies.length > 0) {
+      var driveAgencies = d.agencies;
+      var driveNames = driveAgencies.map(function(a){return a.name;});
+      DEFAULT_AGENCIES.forEach(function(a){
+        if (driveNames.indexOf(a.name) < 0) driveAgencies.push(a);
+      });
+      driveAgencies.forEach(function(a){
+        var def = DEFAULT_AGENCIES.find(function(dd){return dd.name===a.name;});
+        if (def && def.synced && !a.synced) a.synced = true;
+      });
+      AGENCIES = driveAgencies;
+      saveAgencies();
+    } else {
+      AGENCIES = DEFAULT_AGENCIES.slice();
+      saveAgencies();
+    }
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    setSaveBadge('saved', 'Connecté');
+  } catch(e) {
+    AGENCIES = DEFAULT_AGENCIES.slice();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    setSaveBadge('error', 'Erreur');
+  }
+};
+
+function scheduleSave(){
+  setSaveBadge('saving','Sauvegarde...');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async function(){
+    try {
+      await Promise.all([
+        api('/api/data?key=listings', 'POST', listings),
+        api('/api/data?key=visits',   'POST', visits),
+        api('/api/data?key=criteria', 'POST', criteria),
+      ]);
+      var now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      setSaveBadge('saved',now);
+    } catch(e) { setSaveBadge('error','Erreur'); }
+  },1500);
+}
+
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('onclick').includes("'"+id+"'"));});
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function openModal(id){
+  if(id==='m-listing'){
+    populateAgencySel();
+    // Reset au step URL
+    document.getElementById('li-step-url').style.display='block';
+    document.getElementById('li-step-form').style.display='none';
+    document.getElementById('li-url-input').value='';
+    document.getElementById('li-analyze-status').style.display='none';
+    document.getElementById('li-analyze-btn').disabled=false;
+    document.getElementById('li-analyze-btn').textContent='✦ Analyser';
+    document.getElementById('li-photos-preview').style.display='none';
+    document.getElementById('li-photos-preview').innerHTML='';
+    document.getElementById('li-photos-extra-group').style.display='none';
+    ['li-title','li-price','li-surface','li-rooms','li-floor','li-url','li-photo','li-photos-extra','li-notes'].forEach(function(i){
+      var el=document.getElementById(i); if(el) el.value='';
+    });
+  }
+  if(id==='m-visit')   populateListingSel();
+  if(id==='m-criteria') fillCriteriaForm();
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===o)closeModal(o.id);});
+});
+
+function showImportJSON(){
+  document.getElementById('import-json-text').value = '';
+  document.getElementById('import-json-result').textContent = '';
+  openModal('m-import-json');
+}
+
+function doImportJSON(){
+  var json = document.getElementById('import-json-text').value.trim();
+  if(!json){ alert('Collez du JSON d abord !'); return; }
+  try {
+    var items = JSON.parse(json);
+    if(!Array.isArray(items)) items = [items];
+    var added = 0, skipped = 0;
+    items.forEach(function(l){
+      if(!l.url && !l.title) return;
+      if(!l.id) l.id = Date.now()+'-'+Math.random();
+      if(!l.status) l.status = 'A voir';
+      if(!l.agency) l.agency = 'Foncia';
+      if(!l.date) l.date = new Date().toLocaleDateString('fr-FR');
+      if(!l.source) l.source = 'manuel';
+      // Si URL existe déjà : mettre à jour photo/photos si manquantes
+      var existing = l.url ? listings.find(function(x){ return x.url && x.url===l.url; }) : null;
+      if(existing){
+        if(!existing.photo && l.photo) existing.photo = l.photo;
+        if((!existing.photos || !existing.photos.length) && l.photos && l.photos.length) existing.photos = l.photos;
+        skipped++;
+        return;
+      }
+      listings.push(l);
+      added++;
+    });
+    if(added>0) scheduleSave();
+    renderListings(); renderDashSwipe(); updateStats();
+    document.getElementById('import-json-result').textContent =
+      '✅ ' + added + ' ajoutée(s), ' + skipped + ' ignorée(s) sur ' + items.length + '.';
+  } catch(e) {
+    document.getElementById('import-json-result').textContent = '❌ JSON invalide : ' + e.message;
+    document.getElementById('import-json-result').style.color = '#c5221f';
+  }
+}
+
+function importFonciaFromBrowser(){
+  var btn = event.target;
+  btn.textContent = '⏳ Chargement...';
+  btn.disabled = true;
+
+  var fonciaUrl = 'https://fr.foncia.com/achat/paris-75017/appartement';
+  // Essayer plusieurs proxys CORS en cascade
+  var proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?url=',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+
+  function tryProxy(idx) {
+    if (idx >= proxies.length) {
+      btn.textContent = '📥 Importer Foncia';
+      btn.disabled = false;
+      alert('Impossible de contacter Foncia via proxy. Réessayez plus tard.');
+      return;
+    }
+    var proxyUrl = proxies[idx] + encodeURIComponent(fonciaUrl);
+    console.log('Foncia: tentative proxy ' + idx + ': ' + proxyUrl);
+    fetch(proxyUrl)
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function(html){
+        console.log('Foncia proxy ' + idx + ' OK, taille=' + html.length);
+        console.log('Foncia apercu: ' + html.substring(0,300));
+        var idx_lien = html.indexOf('/achat/paris-75017/appartement/');
+        console.log('Foncia lien trouvé à: ' + idx_lien);
+        if(idx_lien >= 0) console.log('ctx: ' + html.substring(idx_lien-30, idx_lien+100));
+        var parsed = parseFonciaHTML(html);
+        finishFonciaImport(parsed, btn);
+      })
+      .catch(function(e){
+        console.warn('Foncia proxy ' + idx + ' échoué: ' + e);
+        tryProxy(idx + 1);
+      });
+  }
+  tryProxy(0);
+}
+
+function parseFonciaHTML(html) {
+  var result = [];
+  // Le proxy allorigins renvoie le HTML brut (pas échappé)
+  // Chercher d'abord ce qu'on a
+  var testIdx = html.indexOf('/achat/paris-75017/appartement/');
+  var testPhoto = html.indexOf('cloudfront.net');
+  console.log('parseFoncia: taille=' + html.length + ' lien=' + testIdx + ' photo=' + testPhoto);
+  if(testIdx >= 0) console.log('ctx lien: ' + html.substring(testIdx-40, testIdx+80));
+
+  // Essayer les deux formats : href="/..." (HTML brut) et href=\"/...\" (JSON échappé)
+  var pattern = /href="(\/achat\/paris-75017\/appartement\/(\d+)\.htm)"/g;
+  var m;
+  while((m = pattern.exec(html)) !== null) {
+    var url = 'https://fr.foncia.com' + m[1];
+    var ref = m[2];
+    if(result.some(function(l){ return l.url===url; })) continue;
+
+    // Contexte autour du lien (2000 chars)
+    var start = Math.max(0, m.index - 500);
+    var end = Math.min(html.length, m.index + 1500);
+    var block = html.substring(start, end);
+
+    // Photo cloudfront
+    var photoMatch = block.match(/https:\/\/d7b3sch6x3cpd\.cloudfront\.net\/annonces\/[^\s"']+lg\.jpeg/);
+    var photo = photoMatch ? photoMatch[0] : '';
+
+    // Prix — plusieurs formats
+    var priceMatch = block.match(/(\d[\d\s ]+\d)\s*€/) ||
+                     block.match(/(\d{5,7})\s*&#8364;/) ||
+                     block.match(/"price"\s*:\s*(\d+)/);
+    var price = priceMatch ? priceMatch[1].replace(/[\s ]/g,'') : '';
+    var priceNum = parseInt(price)||0;
+    if(priceNum > 0 && priceNum < 50000) continue;
+
+    // Surface
+    var surfMatch = block.match(/([\d]+[,.][\d]+|[\d]{2,4})\s*m[²2²]/i);
+    var surface = surfMatch ? surfMatch[1].replace(',','.') : '';
+
+    // Titre h3
+    var titleMatch = block.match(/<h3[^>]*>\s*([\s\S]{5,120}?)\s*<\/h3>/i);
+    var title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g,'').trim() : ('Foncia ' + ref);
+
+    // Pièces
+    var roomMatch = (title+block).match(/(\d+)\s*pi[eè]c/i);
+    var rooms = roomMatch ? roomMatch[1] : '';
+
+    if(!price && !surface) continue;
+    result.push({
+      id: Date.now()+'-'+Math.random(),
+      title: title || ('Foncia Paris 17 - ' + ref),
+      price: price,
+      surface: surface,
+      rooms: rooms,
+      agency: 'Foncia',
+      status: 'A voir',
+      url: url,
+      photo: photo,
+      desc: '',
+      notes: 'Importe depuis Foncia Paris 17',
+      date: new Date().toLocaleDateString('fr-FR'),
+      source: 'manuel'
+    });
+  }
+  console.log('parseFoncia: ' + result.length + ' annonces trouvées');
+  return result;
+}
+
+function finishFonciaImport(newListings, btn) {
+  var added = 0;
+  newListings.forEach(function(l){
+    if(!listings.some(function(x){ return x.url===l.url||(x.price===l.price&&x.surface===l.surface); })){
+      listings.push(l);
+      added++;
+    }
+  });
+  if(added > 0) scheduleSave();
+  renderListings();
+  btn.textContent = '📥 Importer Foncia';
+  btn.disabled = false;
+  alert('Foncia : ' + added + ' nouvelle(s) annonce(s) importée(s) sur ' + newListings.length + ' trouvées.');
+}
+
+function renderAll(){renderAgencies();renderListings();renderVisits();renderCriteria();updateStats();renderDashVisits();renderDashRdv();renderDashSwipe();}
+
+function renderAgencies(){
+  var q=(document.getElementById('ag-search').value||'').toLowerCase();
+  var f=document.getElementById('ag-filter').value;
+  var catBadge={Luxe:'b-amber','En ligne':'b-blue',Generaliste:'b-gray'};
+  var seen=new Set();
+  var unique=[];
+  AGENCIES.forEach(function(a){if(!seen.has(a.name)){seen.add(a.name);unique.push(a);}});
+  var filtered=unique.filter(function(a){return(!q||a.name.toLowerCase().includes(q))&&(!f||a.cat===f);});
+  var grid=document.getElementById('ag-grid');
+  grid.innerHTML='';
+  filtered.forEach(function(a){
+    var card=document.createElement('div');
+    card.className='agency-card';
+    // Ligne nom + badges
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px';
+    var nameDiv=document.createElement('div');
+    nameDiv.className='agency-name';
+    nameDiv.textContent=a.name;
+    var rightDiv=document.createElement('div');
+    rightDiv.style.cssText='display:flex;align-items:center;gap:6px;flex-shrink:0';
+    // Badge categorie
+    var catSpan=document.createElement('span');
+    catSpan.className='badge '+(catBadge[a.cat]||'b-gray');
+    catSpan.textContent=a.cat;
+    rightDiv.appendChild(catSpan);
+    // Badge sync / bloqué
+    if(a.blocked){
+      var blockSpan=document.createElement('span');
+      blockSpan.title=a.blockedReason||'Import automatique non disponible';
+      blockSpan.style.cssText='font-size:13px;cursor:default;';
+      blockSpan.textContent='\u26A0\uFE0F';
+      rightDiv.appendChild(blockSpan);
+      // Note sous le nom
+      var noteDiv=document.createElement('div');
+      noteDiv.style.cssText='font-size:11px;color:#e67700;margin-top:4px;font-style:italic;';
+      noteDiv.textContent='Import manuel uniquement — site bloque le scraping';
+      card.appendChild(noteDiv);
+    } else if(a.synced){
+      var syncSpan=document.createElement('span');
+      syncSpan.title='Synchronisation automatique active';
+      syncSpan.style.cssText='font-size:14px;cursor:default;';
+      syncSpan.textContent='\u2705';
+      rightDiv.appendChild(syncSpan);
+    } else {
+      var nosyncSpan=document.createElement('span');
+      nosyncSpan.title='Pas encore synchronise';
+      nosyncSpan.style.cssText='font-size:13px;color:#ccc;cursor:default;';
+      nosyncSpan.textContent='\u25CB';
+      rightDiv.appendChild(nosyncSpan);
+    }
+    // Bouton supprimer
+    var delBtn=document.createElement('button');
+    delBtn.style.cssText='background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;';
+    delBtn.textContent='\u00D7';
+    delBtn.title='Supprimer cette agence';
+    delBtn.addEventListener('click',(function(agency){return function(){deleteAgency(agency.name);};})(a));
+    rightDiv.appendChild(delBtn);
+    top.appendChild(nameDiv);
+    top.appendChild(rightDiv);
+    card.appendChild(top);
+    // Lien (optionnel si url absente)
+    if(a.url){
+      var link=document.createElement('a');
+      link.className='agency-link';
+      link.href=a.url;
+      link.target='_blank';
+      link.textContent=a.url.replace('https://','').replace('http://','').split('/')[0];
+      card.appendChild(link);
+    }
+    // Bouton Réimporter en bas de carte (agences synced uniquement, pas blocked)
+    if(a.synced && !a.blocked){
+      var reimportBtn=document.createElement('button');
+      reimportBtn.style.cssText='margin-top:8px;width:100%;background:none;border:1px solid #e0e0e0;border-radius:6px;color:#555;font-size:12px;cursor:pointer;padding:5px 0;text-align:center;';
+      reimportBtn.textContent='↺ Réimporter';
+      reimportBtn.title='Supprime les annonces de cette agence et relance l\'import';
+      reimportBtn.addEventListener('click',(function(agency,btn){return function(){
+        if(!confirm('Supprimer toutes les annonces de "'+agency.name+'" et relancer l\'import ?\n\nCela peut prendre 1-2 minutes.')) return;
+        btn.textContent='⏳ En cours…';
+        btn.disabled=true;
+        btn.style.color='#999';
+        // Réimport non disponible en version web
+        btn.textContent='⚠️ Non disponible';
+        btn.style.color='#e67700';
+        btn.disabled=false;
+        setTimeout(function(){btn.textContent='↺ Réimporter';btn.style.color='#555';},3000);
+        alert('Le réimport automatique nécessite Google Apps Script.');
+      };})(a,reimportBtn));
+      card.appendChild(reimportBtn);
+    }
+    grid.appendChild(card);
+  });
+}
+
+function deleteAgency(name){
+  if(!confirm('Supprimer "'+name+'" de la liste ?')) return;
+  AGENCIES=AGENCIES.filter(function(a){return a.name!==name;});
+  saveAgencies();
+  renderAgencies();
+  populateAgencySel();
+}
+
+function saveAgencies(){
+  api('/api/data?key=agencies', 'POST', AGENCIES).catch(function(){});
+}
+
+function openAddAgency(){
+  document.getElementById('ag-add-panel').style.display='block';
+  document.getElementById('ag-new-url').focus();
+  document.getElementById('ag-add-btn').addEventListener('click', detectAgencyName);
+  document.getElementById('ag-new-url').addEventListener('keydown',function(e){if(e.key==='Enter')detectAgencyName();});
+}
+function closeAddAgency(){
+  document.getElementById('ag-add-panel').style.display='none';
+  document.getElementById('ag-new-url').value='';
+  document.getElementById('ag-add-status').style.display='none';
+  document.getElementById('ag-add-confirm').style.display='none';
+}
+
+function detectAgencyName(){
+  var url=document.getElementById('ag-new-url').value.trim();
+  if(!url){alert('Veuillez saisir une URL.');return;}
+  if(!url.startsWith('http')) url='https://'+url;
+  var status=document.getElementById('ag-add-status');
+  var confirm=document.getElementById('ag-add-confirm');
+  status.style.display='block';
+  status.textContent='Recherche du nom en cours...';
+  confirm.style.display='none';
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:100,
+      messages:[{role:'user',content:'Quel est le nom de cette agence immobiliere ? URL: '+url+'. Reponds uniquement avec le nom exact, rien dautre. Si tu ne sais pas, deduis un nom depuis le domaine.'}]
+    })
+  }).then(function(r){return r.json();}).then(function(data){
+    var name=(data.content&&data.content[0]&&data.content[0].text)||url.replace('https://','').replace('http://','').split('/')[0];
+    name=name.trim().replace(/['"]/g,'');
+    document.getElementById('ag-detected-name').textContent=name;
+    document.getElementById('ag-confirm-name').value=name;
+    confirm.style.display='block';
+    status.style.display='none';
+    document.getElementById('ag-confirm-btn').onclick=function(){
+      var finalName=document.getElementById('ag-confirm-name').value.trim()||name;
+      var cat=document.getElementById('ag-new-cat').value;
+      AGENCIES.push({name:finalName,cat:cat,url:url,synced:false});
+      saveAgencies();
+      renderAgencies();
+      populateAgencySel();
+      closeAddAgency();
+    };
+  }).catch(function(){
+    // Fallback: utiliser le domaine comme nom
+    var fallback=url.replace('https://','').replace('http://','').replace('www.','').split('/')[0].split('.')[0];
+    fallback=fallback.charAt(0).toUpperCase()+fallback.slice(1);
+    document.getElementById('ag-detected-name').textContent=fallback;
+    document.getElementById('ag-confirm-name').value=fallback;
+    confirm.style.display='block';
+    status.style.display='none';
+    document.getElementById('ag-confirm-btn').onclick=function(){
+      var finalName=document.getElementById('ag-confirm-name').value.trim()||fallback;
+      var cat=document.getElementById('ag-new-cat').value;
+      AGENCIES.push({name:finalName,cat:cat,url:url,synced:false});
+      saveAgencies();
+      renderAgencies();
+      populateAgencySel();
+      closeAddAgency();
+    };
+  });
+}
+
+function populateAgencySel(){
+  var seen=new Set();
+  var opts=AGENCIES.filter(function(a){if(seen.has(a.name))return false;seen.add(a.name);return true;});
+  document.getElementById('li-agency').innerHTML='<option value="">-- Agence --</option>'+opts.map(function(a){return '<option>'+a.name+'</option>';}).join('');
+}
+function populateListingSel(){
+  document.getElementById('vi-listing').innerHTML='<option value="">-- Annonce --</option>'+listings.map(function(l){return '<option value="'+String(l.id)+'">'+l.title.substring(0,45)+(l.price?' - '+parseInt(l.price).toLocaleString('fr-FR')+' euros':'')+'</option>';}).join('');
+}
+
+function showListingForm(){
+  document.getElementById('li-step-url').style.display='none';
+  document.getElementById('li-step-form').style.display='block';
+}
+
+function analyzeListing(){
+  var url=document.getElementById('li-url-input').value.trim();
+  if(!url){alert('Collez d\'abord le lien de l\'annonce.');return;}
+  var btn=document.getElementById('li-analyze-btn');
+  var status=document.getElementById('li-analyze-status');
+  btn.disabled=true; btn.textContent='⏳ Chargement…';
+  status.style.display='block'; status.textContent='Récupération de la page…';
+
+  fetch(WORKER_URL+'/api/fetch', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+    body:JSON.stringify({url:url})
+  }).then(function(r){return r.json();}).then(function(raw){
+      var res = raw;
+      if(res.error){
+        status.textContent='❌ '+res.error+' — remplissez manuellement.';
+        btn.disabled=false; btn.textContent='✦ Analyser';
+        setTimeout(showListingForm, 1500);
+        return;
+      }
+      status.textContent='✦ Analyse en cours…';
+      // Appel Claude API
+      fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          messages:[{role:'user',content:`Tu es un assistant qui extrait des données d'annonces immobilières françaises.
+
+Voici le HTML d'une annonce (URL: ${url}).
+Extrais les informations et réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni texte autour :
+{
+  "title": "adresse ou titre court de l'annonce",
+  "price": 850000,
+  "surface": 65,
+  "rooms": 3,
+  "floor": "2",
+  "agency": "nom de l'agence",
+  "desc": "description courte 1-2 phrases",
+  "photos": ["url_photo_1", "url_photo_2", "url_photo_3"]
+}
+
+Règles :
+- price et surface sont des nombres sans espace ni symbole
+- floor est une chaîne (ex: "2", "RdC", "Dernier")
+- photos : jusqu'à 10 URLs d'images trouvées dans le HTML (src d'img, og:image, etc.)
+- Si une valeur est introuvable, mets null
+
+HTML :
+${res.html.substring(0,60000)}`}]
+        })
+      })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var text=d.content&&d.content[0]&&d.content[0].text||'';
+        var clean=text.replace(/```json|```/g,'').trim();
+        var info; try{info=JSON.parse(clean);}catch(e){info=null;}
+        if(!info){
+          status.textContent='⚠️ Analyse partielle — vérifiez les champs.';
+          document.getElementById('li-url').value=url;
+          showListingForm();
+          btn.disabled=false; btn.textContent='✦ Analyser';
+          return;
+        }
+        // Remplir les champs
+        if(info.title)  document.getElementById('li-title').value=info.title;
+        if(info.price)  document.getElementById('li-price').value=info.price;
+        if(info.surface)document.getElementById('li-surface').value=info.surface;
+        if(info.rooms)  document.getElementById('li-rooms').value=info.rooms;
+        if(info.floor)  document.getElementById('li-floor').value=info.floor||'';
+        if(info.desc)   document.getElementById('li-notes').value=info.desc;
+        if(info.agency){
+          var agSel=document.getElementById('li-agency');
+          // Chercher correspondance agence
+          var found=false;
+          for(var i=0;i<agSel.options.length;i++){
+            if(agSel.options[i].text.toLowerCase().includes(info.agency.toLowerCase())||
+               info.agency.toLowerCase().includes(agSel.options[i].text.toLowerCase())){
+              agSel.selectedIndex=i; found=true; break;
+            }
+          }
+        }
+        document.getElementById('li-url').value=url;
+        // Photos
+        var photos=info.photos||[];
+        if(photos.length>0) document.getElementById('li-photo').value=photos[0];
+        if(photos.length>1){
+          document.getElementById('li-photos-extra-group').style.display='block';
+          document.getElementById('li-photos-extra').value=photos.slice(1).join('\n');
+        }
+        // Aperçu photos
+        if(photos.length>0){
+          var preview=document.getElementById('li-photos-preview');
+          preview.style.display='block';
+          preview.innerHTML=photos.slice(0,8).map(function(p){
+            return '<img src="'+p+'" style="height:80px;width:120px;object-fit:cover;border-radius:6px;margin-right:6px;display:inline-block;cursor:pointer;border:2px solid transparent" onclick="selectMainPhoto(this,\''+p+'\')" onerror="this.style.display=\'none\'">';
+          }).join('');
+          // Sélectionner la première par défaut
+          var imgs=preview.querySelectorAll('img');
+          if(imgs[0]) imgs[0].style.border='2px solid #1a1a1a';
+        }
+        status.style.display='none';
+        showListingForm();
+        btn.disabled=false; btn.textContent='✦ Analyser';
+      })
+      .catch(function(e){
+        status.textContent='❌ Erreur API — remplissez manuellement.';
+        document.getElementById('li-url').value=url;
+        showListingForm();
+        btn.disabled=false; btn.textContent='✦ Analyser';
+      });
+    })
+    .catch(function(e){
+      status.textContent='❌ Impossible de charger la page.';
+      btn.disabled=false; btn.textContent='✦ Analyser';
+      setTimeout(showListingForm, 1500);
+    });
+}
+
+function selectMainPhoto(img, url){
+  document.getElementById('li-photo').value=url;
+  var imgs=document.getElementById('li-photos-preview').querySelectorAll('img');
+  imgs.forEach(function(i){i.style.border='2px solid transparent';});
+  img.style.border='2px solid #1a1a1a';
+}
+
+function saveListing(){
+  var title=document.getElementById('li-title').value.trim();
+  if(!title){alert('Veuillez saisir un titre.');return;}
+  // Fusionner photo principale + photos extra
+  var mainPhoto=document.getElementById('li-photo').value.trim();
+  var extraRaw=document.getElementById('li-photos-extra').value.trim();
+  var allPhotos=mainPhoto?[mainPhoto]:[];
+  if(extraRaw) extraRaw.split('\n').forEach(function(p){p=p.trim();if(p&&allPhotos.indexOf(p)<0)allPhotos.push(p);});
+  listings.push({
+    id:Date.now(),
+    title:title,
+    price:document.getElementById('li-price').value.trim(),
+    surface:document.getElementById('li-surface').value.trim(),
+    rooms:document.getElementById('li-rooms').value.trim(),
+    floor:document.getElementById('li-floor').value.trim(),
+    agency:document.getElementById('li-agency').value,
+    status:document.getElementById('li-status').value,
+    url:document.getElementById('li-url').value.trim(),
+    photo:allPhotos[0]||'',
+    photos:allPhotos,
+    notes:document.getElementById('li-notes').value.trim(),
+    date:new Date().toLocaleDateString('fr-FR'),
+    source:'manuel'
+  });
+  closeModal('m-listing');
+  renderListings();updateStats();renderDashSwipe();scheduleSave();
+}
+
+function changeStatus(id,newStatus){
+  var l=listings.find(function(l){return String(l.id)===String(id);});
+  if(l){l.status=newStatus;renderListings();renderDashSwipe();scheduleSave();}
+}
+
+function getActiveFilters(){
+  var vals=Array.from(document.querySelectorAll('.filter-bar input[type=checkbox]')).filter(function(cb){return cb.checked;}).map(function(cb){return cb.value;});
+  var activeStatuses=vals.filter(function(v){return['A voir','Visite planifiee','Visite','Coup de coeur','Elimine'].includes(v);});
+  // Agences cochees depuis le dropdown
+  // On lit UNIQUEMENT les cases individuelles (pas agency-all)
+  // Si toutes cochees ou aucune case existante -> null (pas de filtre)
+  // Si aucune cochee -> [] (rien affiche)
+  // Sinon -> tableau des agences cochees
+  var boxes=Array.from(document.querySelectorAll('#agency-checkboxes input[type=checkbox]'));
+  var activeAgencies;
+  if(boxes.length===0){
+    activeAgencies=null; // pas encore construit
+  } else {
+    var checkedBoxes=boxes.filter(function(c){return c.checked;});
+    if(checkedBoxes.length===boxes.length){
+      activeAgencies=null; // toutes cochees = pas de filtre
+    } else {
+      activeAgencies=checkedBoxes.map(function(c){return c.value;});
+    }
+  }
+  return{activeStatuses:activeStatuses,activeSources:[],activeAgencies:activeAgencies};
+}
+
+function toggleAgencyDropdown(e){
+  e.stopPropagation();
+  var menu=document.getElementById('agency-dropdown-menu');
+  if(menu.style.display==='none'){
+    var btn=document.getElementById('agency-dropdown-btn');
+    var rect=btn.getBoundingClientRect();
+    menu.style.top=(rect.bottom+4)+'px';
+    menu.style.left=rect.left+'px';
+    menu.style.display='block';
+  } else {
+    menu.style.display='none';
+  }
+}
+// Fermer si clic dehors
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('agency-dropdown-wrap');
+  if(wrap&&!wrap.contains(e.target)){
+    var menu=document.getElementById('agency-dropdown-menu');
+    if(menu) menu.style.display='none';
+  }
+});
+function resetAllFilters(){
+  // Statuts : tout cocher
+  document.querySelectorAll('.status-filter-cb').forEach(function(cb){ cb.checked=true; });
+  // Agences : tout cocher
+  var allCb=document.getElementById('agency-all');
+  if(allCb){
+    allCb.checked=true;
+    Array.from(document.querySelectorAll('#agency-checkboxes input[type=checkbox]')).forEach(function(c){ c.checked=true; });
+    updateAgencyFilterBtn();
+  }
+  // Tri : date récente
+  var sortSel=document.getElementById('l-sort');
+  if(sortSel) sortSel.value='date-desc';
+  renderListings();
+}
+
+function toggleAllAgencies(cb){
+  Array.from(document.querySelectorAll('#agency-checkboxes input[type=checkbox]')).forEach(function(c){c.checked=cb.checked;});
+  updateAgencyFilterBtn();
+  renderListings();
+}
+function updateAgencyFilterBtn(){
+  var allCb=document.getElementById('agency-all');
+  var boxes=Array.from(document.querySelectorAll('#agency-checkboxes input[type=checkbox]'));
+  var checked=boxes.filter(function(c){return c.checked;});
+  var pill=document.getElementById('agency-filter-count');
+  var btn=document.getElementById('agency-dropdown-btn');
+  if(!allCb) return;
+  if(allCb.checked||checked.length===boxes.length){
+    pill.style.display='none';
+    btn.firstChild.textContent='Toutes ';
+  } else {
+    pill.style.display='inline';
+    pill.textContent=checked.length;
+    btn.firstChild.textContent=checked.length===1?checked[0].value.substring(0,15)+' ':'Agences ';
+  }
+}
+function rebuildAgencyDropdown(){
+  // Construire la liste des agences depuis les annonces existantes
+  var container=document.getElementById('agency-checkboxes');
+  if(!container) return;
+  var existing={};
+  Array.from(container.querySelectorAll('input[type=checkbox]')).forEach(function(cb){
+    existing[cb.value]=cb.checked;
+  });
+  // Collecter toutes les agences uniques des annonces
+  var agencies=[];
+  listings.forEach(function(l){
+    var ag=l.agency||'';
+    if(ag && agencies.indexOf(ag)<0) agencies.push(ag);
+  });
+  agencies.sort();
+  container.innerHTML=agencies.map(function(ag){
+    var checked=(existing[ag]!==undefined)?existing[ag]:true;
+    return '<label class="agency-dropdown-item">'
+      +'<input type="checkbox" value="'+ag+'" '+(checked?'checked':'')
+      +' onchange="syncAllAgencyCheckbox();updateAgencyFilterBtn();renderListings()"> '
+      +ag+'</label>';
+  }).join('');
+  syncAllAgencyCheckbox();
+  updateAgencyFilterBtn();
+}
+function syncAllAgencyCheckbox(){
+  var boxes=Array.from(document.querySelectorAll('#agency-checkboxes input[type=checkbox]'));
+  var allCb=document.getElementById('agency-all');
+  if(!allCb) return;
+  var allChecked=boxes.every(function(c){return c.checked;});
+  allCb.checked=allChecked;
+}
+function parseCriteriaPostcodes(){
+  if(!criteria.location) return [];
+  var codes=[];
+  var parts=criteria.location.split(/[,;]+/);
+  parts.forEach(function(p){
+    p=p.trim();
+    var m75=p.match(/75(\d{3})/);
+    if(m75){codes.push('75'+m75[1]);return;}
+    var m17=p.match(/\b17\b/);if(m17){codes.push('75017');return;}
+    var m8=p.match(/\b8\b/);if(m8){codes.push('75008');return;}
+    var m16=p.match(/\b16\b/);if(m16){codes.push('75016');return;}
+    var m9=p.match(/\b9\b/);if(m9){codes.push('75009');return;}
+    var mAny=p.match(/7501(\d)/);if(mAny){codes.push('7501'+mAny[1]);}
+  });
+  return codes;
+}
+
+// Base villes -> codes postaux (communes proches de Paris)
+var CITY_POSTCODES = {
+  // Paris arrondissements
+  'paris 1':  '75001','paris 2':  '75002','paris 3':  '75003','paris 4':  '75004',
+  'paris 5':  '75005','paris 6':  '75006','paris 7':  '75007','paris 8':  '75008',
+  'paris 9':  '75009','paris 10': '75010','paris 11': '75011','paris 12': '75012',
+  'paris 13': '75013','paris 14': '75014','paris 15': '75015','paris 16': '75016',
+  'paris 17': '75017','paris 18': '75018','paris 19': '75019','paris 20': '75020',
+  // Banlieue proche
+  'boulogne': '92100','boulogne-billancourt': '92100',
+  'issy': '92130','issy-les-moulineaux': '92130',
+  'levallois': '92300','levallois-perret': '92300',
+  'neuilly': '92200','neuilly-sur-seine': '92200',
+  'clichy': '92110',
+  'saint-cloud': '92210','saint cloud': '92210',
+  'meudon': '92190',
+  'clamart': '92140',
+  'vanves': '92170',
+  'montrouge': '92120',
+  'malakoff': '92240',
+  'chatillon': '92320',
+  'vincennes': '94300',
+  'saint-mande': '94160','saint mande': '94160',
+  'charenton': '94220','charenton-le-pont': '94220',
+  'ivry': '94200','ivry-sur-seine': '94200',
+  'joinville': '94340',
+  'maisons-alfort': '94700','maisons alfort': '94700',
+  'alfortville': '94140',
+  'kremlin-bicetre': '94270','le kremlin': '94270',
+  'gentilly': '94250',
+  'arcueil': '94110',
+  'cachan': '94230',
+  'fontenay': '94120','fontenay-sous-bois': '94120',
+  'vincennes': '94300',
+  'saint-ouen': '93400','saint ouen': '93400',
+  'clichy-sous-bois': '93390',
+  'montreuil': '93100',
+  'bagnolet': '93170',
+  'drancy': '93700',
+  'bobigny': '93000',
+  'aubervilliers': '93300',
+  'pantin': '93500',
+  'le pre-saint-gervais': '93310','pre saint gervais': '93310',
+  'les lilas': '93260',
+  'romainville': '93230',
+  'noisy-le-sec': '93130',
+  'bondy': '93140',
+  'villemomble': '93250',
+  'rosny-sous-bois': '93110','rosny': '93110',
+  'chelles': '77500',
+  'versailles': '78000',
+  'saint-germain': '78100','saint germain en laye': '78100',
+  'le chesnay': '78150','chesnay': '78150',
+  'velizy': '78140',
+  'massy': '91300',
+  'antony': '92160',
+  'chatenay': '92290','chatenay-malabry': '92290',
+  'sceaux': '92330',
+  'robinson': '92350','le plessis': '92350',
+  'rueil': '92500','rueil-malmaison': '92500',
+  'nanterre': '92000',
+  'courbevoie': '92400',
+  'la defense': '92800','defense': '92800',
+  'puteaux': '92800',
+  'suresnes': '92150',
+  'colombes': '92700',
+  'gennevilliers': '92230',
+  'asnieres': '92600','asnieres-sur-seine': '92600',
+  'villeneuve-la-garenne': '92390',
+  'epinay': '93800',
+  'stains': '93240',
+  'la courneuve': '93120','courneuve': '93120',
+  'dugny': '93440',
+  'blanc-mesnil': '93150','le blanc mesnil': '93150',
+  'aulnay': '93600','aulnay-sous-bois': '93600',
+  'sevran': '93270',
+  'villepinte': '93420',
+  'tremblay': '93290','tremblay-en-france': '93290',
+  'gagny': '93220',
+  'neuilly-sur-marne': '93330','neuilly sur marne': '93330',
+  'noisy-le-grand': '93160','noisy le grand': '93160'
+};
+
+function guessPostcode(text){
+  if(!text) return '';
+  var t = text.toLowerCase()
+    .replace(/[\u00e0-\u00e2]/g,'a')
+    .replace(/[\u00e8-\u00ea]/g,'e')
+    .replace(/[\u00ee]/g,'i')
+    .replace(/[\u00f4]/g,'o')
+    .replace(/[\u00f9-\u00fb]/g,'u')
+    .replace(/[\u00e7]/g,'c');
+
+  // 1. Code postal direct ex: 75017 ou 93700
+  var m = t.match(/\b(\d{5})\b/);
+  if(m) return m[1];
+
+  // 2. "paris 17" ou "paris 17e" ou "paris 17eme"
+  var m2 = t.match(/paris\s*(\d{1,2})/);
+  if(m2){var a=parseInt(m2[1]);if(a>=1&&a<=20)return '750'+(a<10?'0'+a:''+a);}
+
+  // 3. "17eme arrondissement" ou "17e"
+  var m3 = t.match(/\b(\d{1,2})(?:e(?:me)?|eme|er)?\s*(?:arr|arrondissement)/i);
+  if(m3){var b=parseInt(m3[1]);if(b>=1&&b<=20)return '750'+(b<10?'0'+b:''+b);}
+
+  // 4. Recherche par nom de ville dans la base
+  var keys = Object.keys(CITY_POSTCODES);
+  // Trier par longueur decroissante pour matcher d'abord les noms longs
+  keys.sort(function(a,b){return b.length - a.length;});
+  for(var i=0; i<keys.length; i++){
+    if(t.indexOf(keys[i]) >= 0) return CITY_POSTCODES[keys[i]];
+  }
+
+  // 5. Juste "paris" sans arrondissement -> 75000 (generique)
+  if(t.indexOf('paris') >= 0) return '75000';
+
+  return '';
+}
+
+// Verifie si un code postal generique correspond aux filtres
+// ex: '75000' matche avec ['75017','75008']
+function postcodeMatchesFilter(guessed, filterCodes){
+  if(filterCodes.indexOf(guessed) >= 0) return true;
+  // Code generique Paris (75000) -> accepter si filtre contient un 75xxx
+  if(guessed === '75000'){
+    return filterCodes.some(function(c){ return c.startsWith('75'); });
+  }
+  return false;
+}
+
+function matchesCriteria(l){
+  var budgetMax=parseInt(criteria.budget)||0;
+  var surfaceMin=parseInt(criteria.surface)||0;
+  var roomsMin=parseInt(criteria.rooms)||0;
+  var postcodes=parseCriteriaPostcodes();
+  var budgetMin=parseInt(criteria.budgetMin)||0;
+  var surfaceMax=parseInt(criteria.surfaceMax)||0;
+  if(budgetMin>0 && parseInt(l.price||0)>0 && parseInt(l.price||0)<budgetMin) return false;
+  if(budgetMax>0 && parseInt(l.price||0)>budgetMax) return false;
+  if(surfaceMin>0 && parseFloat(l.surface||0)<surfaceMin) return false;
+  if(surfaceMax>0 && parseFloat(l.surface||0)>surfaceMax) return false;
+  if(roomsMin>0 && parseInt(l.rooms||0)<roomsMin) return false;
+  if(postcodes.length>0){
+    var combined=(l.title||'')+' '+(l.notes||'')+' '+(l.desc||'')+' '+(l.agency||'');
+    var guessed=guessPostcode(combined);
+    if(guessed){
+      return postcodeMatchesFilter(guessed, postcodes);
+    }
+    // Aucune ville identifiable -> bloquer par defaut (plutot que laisser passer)
+    return false;
+  }
+  return true;
+}
+
+var _activeCriteriaKey=null;
+
+function renderCriteriaBar(){
+  var el=document.getElementById('criteria-bar-content');
+  if(!el) return;
+  var defs=[
+    {key:'location',   empty:'+ Zone'},
+    {key:'budgetMin',  empty:'+ Budget min'},
+    {key:'budget',     empty:'+ Budget max'},
+    {key:'surface',    empty:'+ Surface min'},
+    {key:'surfaceMax', empty:'+ Surface max'},
+    {key:'rooms',      empty:'+ Pieces min'},
+    {key:'floor',      empty:'+ Etage min'}
+  ];
+  el.innerHTML=defs.map(function(d){
+    var val=criteria[d.key]||'';
+    var active=(_activeCriteriaKey===d.key);
+    var chipText='';
+    if(d.key==='location')    chipText=val?'Zone: '+val:d.empty;
+    else if(d.key==='budgetMin')  chipText=val?'Min: '+parseInt(val).toLocaleString('fr-FR')+' €':d.empty;
+    else if(d.key==='budget')     chipText=val?'Max: '+parseInt(val).toLocaleString('fr-FR')+' €':d.empty;
+    else if(d.key==='surface')    chipText=val?'≥ '+val+' m²':d.empty;
+    else if(d.key==='surfaceMax') chipText=val?'≤ '+val+' m²':d.empty;
+    else if(d.key==='rooms')      chipText=val?val+'+ pièces':d.empty;
+    else if(d.key==='floor')      chipText=val?'Étage '+val+'+':d.empty;
+    var bg=active?'#1a1a1a':(val?'#f1efe8':'#f8f8f8');
+    var color=active?'white':(val?'#333':'#aaa');
+    var border=active?'#1a1a1a':(val?'#ddd':'#e0e0e0');
+    return '<span data-ckey="'+d.key+'" class="crit-chip" style="background:'+bg+';border:1.5px solid '+border+';border-radius:20px;padding:4px 12px;font-size:11px;color:'+color+';white-space:nowrap;cursor:pointer;user-select:none">'+chipText+'</span>';
+  }).join('');
+  // Attacher les listeners apres injection HTML
+  el.querySelectorAll('.crit-chip').forEach(function(chip){
+    chip.addEventListener('click',function(){openCriteriaEditor(chip.getAttribute('data-ckey'));});
+  });
+}
+
+function openCriteriaEditor(key){
+  if(_activeCriteriaKey===key){ closeCriteriaEditor(); return; }
+  _activeCriteriaKey=key;
+  renderCriteriaBar();
+  var ed=document.getElementById('criteria-inline-editor');
+  ed.style.display='block';
+  if(key==='location'){
+    var pcs=(criteria.location||'').split(/[;,\s]+/).map(function(p){return p.trim();}).filter(Boolean);
+    ed.innerHTML='<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px">Zones (codes postaux)</div>'
+      +'<div id="pc-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+      +'<input id="pc-input" class="form-input" style="flex:1;padding:8px 12px;font-size:14px" placeholder="ex: 75017" type="text" maxlength="5">'
+      +'<button class="btn btn-primary btn-sm" id="pc-add-btn">Ajouter</button>'
+      +'<button class="btn btn-sm" id="pc-close-btn">Fermer</button>'
+      +'</div>';
+    renderPcChips(pcs);
+    document.getElementById('pc-add-btn').addEventListener('click', addPostcode);
+    document.getElementById('pc-close-btn').addEventListener('click', closeCriteriaEditor);
+    var inp=document.getElementById('pc-input');
+    if(inp){ inp.focus(); inp.addEventListener('keydown',function(e){if(e.key==='Enter')addPostcode();}); }
+  } else {
+    var configs={
+      budgetMin: {label:'Budget minimum (€)',    placeholder:'ex: 300000'},
+      budget:    {label:'Budget maximum (€)',    placeholder:'ex: 1250000'},
+      surface:   {label:'Surface minimum (m²)',  placeholder:'ex: 60'},
+      surfaceMax:{label:'Surface maximum (m²)',  placeholder:'ex: 150'},
+      rooms:     {label:'Pièces minimum',        placeholder:'ex: 3'},
+      floor:     {label:'Étage minimum',         placeholder:'ex: 2'}
+    };
+    var cfg=configs[key];
+    ed.innerHTML='<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px">'+cfg.label+'</div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+      +'<input id="crit-input" class="form-input" style="flex:1;padding:8px 12px;font-size:14px" type="number" inputmode="numeric" placeholder="'+cfg.placeholder+'" value="'+(criteria[key]||'')+'">'
+      +(criteria[key]?'<button class="btn btn-sm" id="crit-clear-btn">Effacer</button>':'')
+      +'<button class="btn btn-sm" id="crit-close-btn">Fermer</button>'
+      +'</div>';
+    var clearBtn=document.getElementById('crit-clear-btn');
+    if(clearBtn) clearBtn.addEventListener('click',function(){clearCriteria(key);});
+    document.getElementById('crit-close-btn').addEventListener('click', closeCriteriaEditor);
+    var inp=document.getElementById('crit-input');
+    if(inp){
+      inp.focus();
+      inp.addEventListener('keydown',function(e){if(e.key==='Enter'){saveCriteriaField(key,inp.value);}});
+      inp.addEventListener('blur',function(){saveCriteriaField(key,inp.value);});
+    }
+  }
+}
+
+function renderPcChips(pcs){
+  var container=document.getElementById('pc-chips');
+  if(!container) return;
+  container.innerHTML='';
+  pcs.forEach(function(pc){
+    var span=document.createElement('span');
+    span.style.cssText='background:#e6f1fb;border:1px solid #b8d4f0;border-radius:20px;padding:3px 10px;font-size:12px;color:#0c447c;display:flex;align-items:center;gap:6px';
+    span.innerHTML=pc+' <span style="cursor:pointer;font-size:14px;line-height:1;color:#666">&times;</span>';
+    span.querySelector('span').addEventListener('click',function(){removePostcode(pc);});
+    container.appendChild(span);
+  });
+}
+
+function closeCriteriaEditor(){
+  _activeCriteriaKey=null;
+  var ed=document.getElementById('criteria-inline-editor');
+  if(ed) ed.style.display='none';
+  renderCriteriaBar();
+}
+
+function saveCriteriaField(key,val){
+  criteria[key]=val.trim();
+  renderCriteria();renderListings();renderDashSwipe();scheduleSave();
+  renderCriteriaBar();
+}
+
+function addPostcode(){
+  var inp=document.getElementById('pc-input');
+  if(!inp) return;
+  var val=inp.value.trim().replace(/\s/g,'');
+  if(!val) return;
+  var current=(criteria.location||'').split(/[;,\s]+/).map(function(p){return p.trim();}).filter(Boolean);
+  if(current.indexOf(val)<0) current.push(val);
+  criteria.location=current.join('; ');
+  inp.value='';
+  renderCriteria();renderListings();renderDashSwipe();scheduleSave();
+  var pcs=current;
+  renderPcChips(pcs);
+  renderCriteriaBar();
+  // Reouvrir l'editeur zone pour continuer a ajouter
+  _activeCriteriaKey='location';
+  renderCriteriaBar();
+  var inp2=document.getElementById('pc-input');
+  if(inp2) inp2.focus();
+}
+
+function removePostcode(pc){
+  var current=(criteria.location||'').split(/[;,\s]+/).map(function(p){return p.trim();}).filter(Boolean);
+  current=current.filter(function(p){return p!==pc;});
+  criteria.location=current.join('; ');
+  renderCriteria();renderListings();renderDashSwipe();scheduleSave();
+  if(current.length===0){ closeCriteriaEditor(); }
+  else { renderPcChips(current); renderCriteriaBar(); }
+}
+
+function clearCriteria(key){
+  criteria[key]='';
+  renderCriteria();renderListings();renderDashSwipe();scheduleSave();
+  closeCriteriaEditor();
+}
+
+function parseDate(str){
+  if(!str) return 0;
+  // Format dd/mm/yyyy
+  var p=str.split('/');
+  if(p.length===3) return new Date(p[2],p[1]-1,p[0]).getTime();
+  return new Date(str).getTime()||0;
+}
+function renderListings(){
+  rebuildAgencyDropdown();
+  var filters=getActiveFilters();
+  var activeStatuses=filters.activeStatuses;
+  var activeAgencies=filters.activeAgencies; // null=toutes, []=aucune, [..]=selection
+  var sort=document.getElementById('l-sort').value;
+  var srcLabel={seloger:'SeLoger',leboncoin:'LBC',manuel:'Manuel'};
+  var statuses=['A voir','Visite planifiee','Visite','Coup de coeur','Elimine'];
+  var filtered=listings.filter(function(l){
+    if(!activeStatuses.includes(l.status)) return false;
+    if(activeAgencies!==null && activeAgencies.indexOf(l.agency||'') < 0) return false;
+    if(!matchesCriteria(l)) return false;
+    return true;
+  });
+  if(sort){filtered.sort(function(a,b){
+    var pa=parseInt(a.price)||0,pb=parseInt(b.price)||0;
+    var sa=parseInt(a.surface)||0,sb=parseInt(b.surface)||0;
+    var pma=sa?Math.round(pa/sa):0,pmb=sb?Math.round(pb/sb):0;
+    if(sort==='price-asc')return pa-pb;
+    if(sort==='price-desc')return pb-pa;
+    if(sort==='surface-asc')return sa-sb;
+    if(sort==='surface-desc')return sb-sa;
+    if(sort==='ppm2-asc')return pma-pmb;
+    if(sort==='ppm2-desc')return pmb-pma;
+    if(sort==='date-desc'||sort==='date-asc'){
+      var da=parseDate(a.date),db=parseDate(b.date);
+      return sort==='date-desc'?db-da:da-db;
+    }
+    return 0;
+  });}
+  filtered.forEach(function(l){
+    var sid=String(l.id);
+    if(l.url) listingUrls[sid]=l.url;
+    if(l.photo) listingPhotos[sid]=l.photo;
+  });
+  document.getElementById('listings-count').textContent=filtered.length;
+  renderCriteriaBar();
+
+  var container=document.getElementById('listings-list');
+  if(!filtered.length){
+    container.innerHTML='<div class="empty">Aucune annonce trouvee.</div>';
+    return;
+  }
+
+  // Construire les cartes via DOM (zero innerHTML avec guillemets imbriques)
+  container.innerHTML='';
+  filtered.forEach(function(l){
+    var sid=String(l.id);
+    var price=parseInt(l.price)||0, surf=parseInt(l.surface)||0;
+    var ppm2=(price&&surf)?Math.round(price/surf).toLocaleString('fr-FR')+' e/m2':'';
+    var details=[l.agency,l.rooms?l.rooms+'p':'',l.surface?l.surface+'m2':'',l.floor?'Et.'+l.floor:'',price?price.toLocaleString('fr-FR')+'e':'',ppm2].filter(Boolean).join(' - ');
+    var dateLabel=l.date?'Ajoute le '+l.date:'';
+    var photos=getPhotos(l);
+    var si=slideIndexes[sid]||0;
+
+    // Carte principale
+    var card=document.createElement('div');
+    card.className='listing-card';
+
+    // --- SLIDESHOW ---
+    var slideDiv=document.createElement('div');
+    slideDiv.className='slideshow';
+    if(photos.length>0){
+      var img=document.createElement('img');
+      img.id='simg-'+sid;
+      img.src=photos[si]||'';
+      img.alt='';
+      img.onerror=function(){this.src='';};
+      img.addEventListener('click',(function(s){return function(){
+        var ph=getPhotos(listings.find(function(x){return String(x.id)===s;})||{});
+        var ci=slideIndexes[s]||0;
+        if(ph[ci]){
+          listingPhotos[s]=ph[ci];
+          openLightbox(s,'');
+        }
+      };})(sid));
+      slideDiv.appendChild(img);
+      if(photos.length>1){
+        var btnPrev=document.createElement('button');
+        btnPrev.className='slide-btn prev';
+        btnPrev.innerHTML='&#8249;';
+        btnPrev.addEventListener('click',(function(s){return function(e){e.stopPropagation();slidePhoto(s,-1);};})(sid));
+        var btnNext=document.createElement('button');
+        btnNext.className='slide-btn next';
+        btnNext.innerHTML='&#8250;';
+        btnNext.addEventListener('click',(function(s){return function(e){e.stopPropagation();slidePhoto(s,1);};})(sid));
+        var ctr=document.createElement('span');
+        ctr.className='slide-counter';
+        ctr.id='sctr-'+sid;
+        ctr.textContent=(si+1)+'/'+photos.length;
+        slideDiv.appendChild(btnPrev);
+        slideDiv.appendChild(btnNext);
+        slideDiv.appendChild(ctr);
+      }
+    } else {
+      slideDiv.style.cssText='display:flex;align-items:center;justify-content:center;';
+      var noPhoto=document.createElement('span');
+      noPhoto.style.cssText='font-size:11px;color:#bbb';
+      noPhoto.textContent='Pas de photo';
+      slideDiv.appendChild(noPhoto);
+    }
+    card.appendChild(slideDiv);
+
+    // --- CONTENU ---
+    var content=document.createElement('div');
+    content.className='listing-content';
+
+    // Header titre + bouton supprimer
+    var header=document.createElement('div');
+    header.className='listing-header';
+    var titleDiv=document.createElement('div');
+    titleDiv.className='listing-title';
+    titleDiv.textContent=l.title;
+    if(l.source&&l.source!=='manuel'){
+      var badge=document.createElement('span');
+      badge.className='source-badge';
+      badge.textContent=srcLabel[l.source]||l.source;
+      titleDiv.appendChild(badge);
+    }
+    var delBtn=document.createElement('button');
+    delBtn.className='btn btn-sm';
+    delBtn.style.padding='4px 8px';
+    delBtn.textContent='X';
+    delBtn.addEventListener('click',(function(s){return function(){deleteListing(s);};})(sid));
+    header.appendChild(titleDiv);
+    header.appendChild(delBtn);
+    content.appendChild(header);
+
+    // Sous-titre details
+    var sub=document.createElement('div');
+    sub.className='listing-sub';
+    sub.textContent=details;
+    content.appendChild(sub);
+
+    // Date ajout
+    if(dateLabel){
+      var dateEl=document.createElement('div');
+      dateEl.className='listing-date';
+      dateEl.textContent=dateLabel;
+      content.appendChild(dateEl);
+    }
+
+    // Actions: select statut + lien
+    var actions=document.createElement('div');
+    actions.className='listing-actions';
+    var sel=document.createElement('select');
+    sel.className='status-select';
+    statuses.forEach(function(s){
+      var opt=document.createElement('option');
+      opt.value=s; opt.textContent=s;
+      if(l.status===s) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change',(function(s,select){return function(){changeStatus(s,select.value);};})(sid,sel));
+    actions.appendChild(sel);
+    if(l.url){
+      var voir=document.createElement('a');
+      voir.href='#';
+      voir.style.cssText='font-size:12px;color:#1a6bbf;';
+      voir.textContent='Voir';
+      voir.addEventListener('click',(function(s){return function(e){e.preventDefault();openLink(s);};})(sid));
+      actions.appendChild(voir);
+    }
+    content.appendChild(actions);
+
+    // Description
+    if(l.desc){
+      var descDiv=document.createElement('div');
+      descDiv.className='listing-desc';
+      descDiv.textContent=l.desc;
+      content.appendChild(descDiv);
+    }
+
+    card.appendChild(content);
+    container.appendChild(card);
+  });
+}
+
+function deleteListing(id){
+  if(!confirm('Supprimer ?'))return;
+  listings=listings.filter(function(l){return String(l.id)!==String(id);});
+  renderListings();updateStats();renderDashSwipe();scheduleSave();
+}
+
+function saveVisit(){
+  var date=document.getElementById('vi-date').value;
+  if(!date){alert('Veuillez saisir une date.');return;}
+  var listingId=document.getElementById('vi-listing').value;
+  var listing=listingId?listings.find(function(l){return String(l.id)===String(listingId);}):null;
+  var visitAgency = listing ? (listing.agency || '') : '';
+  visits.push({id:Date.now(),listingId:listingId||null,listingTitle:listing?listing.title:'Annonce non precisee',agency:visitAgency,date:date,rating:document.getElementById('vi-rating').value,agent:document.getElementById('vi-agent').value.trim(),notes:document.getElementById('vi-notes').value.trim()});
+  if(listing){listing.status='Visite';renderListings();renderDashSwipe();}
+  closeModal('m-visit');
+  ['vi-agent','vi-notes'].forEach(function(id){document.getElementById(id).value='';});
+  renderVisits();updateStats();renderDashVisits();renderDashRdv();scheduleSave();
+}
+
+function renderVisits(){
+  var stars = function(n){return '&#9733;'.repeat(+n)+'&#9734;'.repeat(5-+n);};
+
+  // Mettre a jour la liste des agences dans le filtre
+  var agencySelect = document.getElementById('vi-agency-filter');
+  var currentFilter = agencySelect ? agencySelect.value : '';
+  var agenciesInVisits = [];
+  visits.forEach(function(v){
+    var ag = v.agency || '';
+    if(ag && agenciesInVisits.indexOf(ag) < 0) agenciesInVisits.push(ag);
+  });
+  // Ajouter aussi les agences des annonces visitees
+  visits.forEach(function(v){
+    if(v.listingId){
+      var l = listings.find(function(x){return String(x.id)===String(v.listingId);});
+      if(l && l.agency && agenciesInVisits.indexOf(l.agency) < 0) agenciesInVisits.push(l.agency);
+    }
+  });
+  agenciesInVisits.sort();
+  if(agencySelect){
+    agencySelect.innerHTML = '<option value="">Toutes les agences</option>'
+      + agenciesInVisits.map(function(a){
+          return '<option value="'+a+'"'+(a===currentFilter?' selected':'')+'>'+a+'</option>';
+        }).join('');
+  }
+
+  // Filtrer
+  var search = (document.getElementById('vi-search')||{value:''}).value.toLowerCase();
+  var agFilter = agencySelect ? agencySelect.value : '';
+
+  var filtered = [].concat(visits).reverse().filter(function(v){
+    // Filtre agence
+    if(agFilter){
+      var vAg = v.agency || '';
+      if(!vAg && v.listingId){
+        var l2 = listings.find(function(x){return String(x.id)===String(v.listingId);});
+        if(l2) vAg = l2.agency || '';
+      }
+      if(vAg !== agFilter) return false;
+    }
+    // Filtre texte
+    if(search){
+      var haystack = (v.listingTitle||'').toLowerCase()+(v.agent||'').toLowerCase()+(v.notes||'').toLowerCase();
+      if(haystack.indexOf(search) < 0) return false;
+    }
+    return true;
+  });
+
+  var container = document.getElementById('visits-list');
+  if(!filtered.length){
+    container.innerHTML = '<div class="empty">Aucune visite trouvee.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(function(v){
+    var ag = v.agency || '';
+    if(!ag && v.listingId){
+      var l3 = listings.find(function(x){return String(x.id)===String(v.listingId);});
+      if(l3) ag = l3.agency || '';
+    }
+    return '<div class="card">'
+      +'<div class="card-header">'
+        +'<div style="flex:1">'
+          +'<div class="card-title" style="font-size:14px">'+v.listingTitle+'</div>'
+          +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">'
+            +'<span class="badge b-gray">'+new Date(v.date).toLocaleDateString('fr-FR')+'</span>'
+            +'<span class="stars">'+stars(v.rating)+'</span>'
+            +(ag?'<span class="badge b-green">'+ag+'</span>':'')
+            +(v.agent?'<span class="badge b-blue">'+v.agent+'</span>':'')
+          +'</div>'
+        +'</div>'
+        +'<button class="btn btn-sm" onclick="deleteVisit('+v.id+')">X</button>'
+      +'</div>'
+      +(v.notes?'<div class="visit-note">'+v.notes+'</div>':'')
+    +'</div>';
+  }).join('');
+}
+
+function renderDashVisits(){
+  var stars=function(n){return '&#9733;'.repeat(+n)+'&#9734;'.repeat(5-+n);};
+  var recent=[].concat(visits).reverse().slice(0,5);
+  document.getElementById('dash-visits').innerHTML=recent.length
+    ?recent.map(function(v){return '<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="font-size:13px;font-weight:600;line-height:1.3;flex:1">'+v.listingTitle+'</div><span class="stars" style="font-size:13px;flex-shrink:0">'+stars(v.rating)+'</span></div><div style="font-size:12px;color:#888;margin-top:4px">'+new Date(v.date).toLocaleDateString('fr-FR')+(v.agent?' - '+v.agent:'')+'</div></div>';}).join('')
+    :'<div class="empty">Aucune visite.</div>';
+}
+
+function renderDashRdv(){
+  var now = new Date();
+  now.setHours(0,0,0,0);
+  var upcoming = visits.filter(function(v){
+    if(!v.date) return false;
+    var d = new Date(v.date);
+    d.setHours(0,0,0,0);
+    return d >= now && v.status !== 'Visite';
+  }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+
+  var wrap = document.getElementById('dash-rdv-wrap');
+  var container = document.getElementById('dash-rdv');
+  var pill = document.getElementById('dash-rdv-count');
+
+  if(upcoming.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  pill.textContent = upcoming.length;
+
+  container.innerHTML = '';
+  upcoming.forEach(function(v){
+    var d = new Date(v.date);
+    var day = d.getDate();
+    var months = ['jan','fev','mar','avr','mai','jun','jul','aou','sep','oct','nov','dec'];
+    var month = months[d.getMonth()];
+    var diffDays = Math.round((d - now) / 86400000);
+    var urgent = diffDays <= 2;
+
+    var card = document.createElement('div');
+    card.className = 'rdv-card' + (urgent ? ' rdv-urgent' : '');
+
+    var dateBox = document.createElement('div');
+    dateBox.className = 'rdv-date';
+    dateBox.innerHTML = '<div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div>';
+
+    var body = document.createElement('div');
+    body.className = 'rdv-body';
+
+    var title = document.createElement('div');
+    title.className = 'rdv-title';
+    title.textContent = v.listingTitle || 'Visite';
+
+    var sub = document.createElement('div');
+    sub.className = 'rdv-sub';
+    var subParts = [];
+    if(diffDays === 0) subParts.push("Aujourd'hui !");
+    else if(diffDays === 1) subParts.push('Demain');
+    else subParts.push('Dans ' + diffDays + ' jours');
+    if(v.agent) subParts.push(v.agent);
+    if(v.time) subParts.push(v.time);
+    sub.textContent = subParts.join(' - ');
+
+    body.appendChild(title);
+    body.appendChild(sub);
+    card.appendChild(dateBox);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+}
+
+function deleteVisit(id){
+  if(!confirm('Supprimer ?'))return;
+  visits=visits.filter(function(v){return v.id!==id;});
+  renderVisits();updateStats();renderDashVisits();renderDashRdv();scheduleSave();
+}
+
+function updateStats(){
+  document.getElementById('s-listings').textContent=listings.length;
+  document.getElementById('s-visits').textContent=visits.length;
+}
+
+function fillCriteriaForm(){
+  var map={loc:'location','budget-min':'budgetMin',budget:'budget',surface:'surface','surface-max':'surfaceMax',rooms:'rooms',floor:'floor',must:'must',nice:'nice',no:'no'};
+  ['loc','budget-min','budget','surface','surface-max','rooms','floor','must','nice','no'].forEach(function(k){
+    document.getElementById('cr-'+k).value=criteria[map[k]]||'';
+  });
+}
+
+function saveCriteria(){
+  criteria={location:document.getElementById('cr-loc').value,budgetMin:document.getElementById('cr-budget-min').value,budget:document.getElementById('cr-budget').value,surface:document.getElementById('cr-surface').value,surfaceMax:document.getElementById('cr-surface-max').value,rooms:document.getElementById('cr-rooms').value,floor:document.getElementById('cr-floor').value,must:document.getElementById('cr-must').value,nice:document.getElementById('cr-nice').value,no:document.getElementById('cr-no').value};
+  closeModal('m-criteria');renderCriteria();renderListings();renderDashSwipe();scheduleSave();
+}
+
+function renderCriteria(){
+  var rows=[['Localisation',criteria.location],['Budget min',criteria.budgetMin?parseInt(criteria.budgetMin).toLocaleString('fr-FR')+' €':''],['Budget max',criteria.budget?parseInt(criteria.budget).toLocaleString('fr-FR')+' €':''],['Surface min',criteria.surface?criteria.surface+' m²':''],['Surface max',criteria.surfaceMax?criteria.surfaceMax+' m²':''],['Pieces min',criteria.rooms],['Etage min',criteria.floor],['Indispensables',criteria.must],['Souhaitables',criteria.nice],['Redhibitoires',criteria.no]].filter(function(r){return r[1];});
+  document.getElementById('criteria-display').innerHTML=rows.length?rows.map(function(r){return '<div class="criteria-row"><span class="criteria-key">'+r[0]+'</span><span class="criteria-val">'+r[1]+'</span></div>';}).join(''):'<div style="font-size:13px;color:#aaa;padding:10px 0">Aucun critere defini.</div>';
+}
+
+// ===================== DVF =====================
+// Sections cadastrales de Paris 17e (75117) — liste fixe
+var DVF_SECTIONS_75117 = [
+  '000AB','000AC','000AD','000AE','000AF','000AG','000AH','000AI','000AK','000AL',
+  '000AM','000AN','000AO','000AP','000AQ','000AR','000AS','000AU','000AW','000AX',
+  '000AY','000BC','000BE','000BF','000BG','000BH','000BI','000BJ','000BK','000BL',
+  '000BM','000BN','000BO','000BP','000BQ','000BR','000BS','000BT','000BU','000BV',
+  '000BW','000BX','000BZ'
+];
+
+// Stockage des données brutes pour re-filtrage
+var dvfRawExact = [], dvfRawStreet = [];
+var dvfSortState = {col:'date', dir:-1};
+
+function dvfProcessResults(all, codeVoie, nomVoie, sel) {
+  var exact = [], street = [];
+  var numStr = (sel.housenumber || '').toString().trim();
+  // Dédoublonner par id_mutation : garder Appartement/Maison en priorité
+  var byMutation = {};
+  all.forEach(function(item) {
+    (item.mutations || []).forEach(function(m) {
+      if (m.nature_mutation !== 'Vente') return;
+      // Exclure uniquement les terrains non bâtis (pas de surface bâtie)
+      if (!m.surface_reelle_bati || parseFloat(m.surface_reelle_bati) === 0) return;
+      var mVoie = (m.adresse_nom_voie || '').toUpperCase();
+      var mCode = (m.adresse_code_voie || '').toString();
+      var matchVoie = (codeVoie && mCode === codeVoie) || (nomVoie && mVoie.indexOf(nomVoie) >= 0);
+      if (!matchVoie) return;
+      var mid = m.id_mutation || (m.date_mutation + '_' + m.valeur_fonciere);
+      var tl = m.type_local || '';
+      // Priorité : Appartement > Maison > reste
+      var prev = byMutation[mid];
+      if (!prev) { byMutation[mid] = m; }
+      else if (tl === 'Appartement') { byMutation[mid] = m; }
+      else if (tl === 'Maison' && prev.type_local !== 'Appartement') { byMutation[mid] = m; }
+    });
+  });
+  Object.keys(byMutation).forEach(function(mid) {
+    var m = byMutation[mid];
+    var mNum = (m.adresse_numero || '').toString().replace('.0','').trim();
+    if (numStr && mNum === numStr) exact.push(m);
+    else street.push(m);
+  });
+  dvfRawExact  = exact;
+  dvfRawStreet = street;
+  dvfSortState = {col:'date', dir:-1};
+  document.getElementById('dvf-loading').style.display = 'none';
+  document.getElementById('dvf-results').style.display = 'block';
+  document.getElementById('dvf-street-label').textContent = sel.street ? '\u2014 ' + sel.street : '';
+  renderDvfTable('dvf-exact-table',  'dvf-exact-count',  dvfRawExact,  true);
+  renderDvfTable('dvf-street-table', 'dvf-street-count', dvfRawStreet, false);
+}
+
+function dvfSortBy(col, tableId, countId, isExact) {
+  if (dvfSortState.col === col) {
+    dvfSortState.dir *= -1;
+  } else {
+    dvfSortState.col = col;
+    dvfSortState.dir = -1;
+  }
+  var raw = isExact ? dvfRawExact : dvfRawStreet;
+  var sorted = raw.slice().sort(function(a, b) {
+    var d = dvfSortState.dir;
+    if (col === 'date') return d * (a.date_mutation||'').localeCompare(b.date_mutation||'');
+    if (col === 'num') { var na=parseInt(a.adresse_numero)||0, nb=parseInt(b.adresse_numero)||0; return d*(na-nb); }
+    if (col === 'surf') return d*((parseFloat(a.surface_reelle_bati)||0)-(parseFloat(b.surface_reelle_bati)||0));
+    if (col === 'pcs')  return d*((parseFloat(a.nombre_pieces_principales)||0)-(parseFloat(b.nombre_pieces_principales)||0));
+    if (col === 'prix') return d*((parseFloat(a.valeur_fonciere)||0)-(parseFloat(b.valeur_fonciere)||0));
+    if (col === 'pm2') {
+      var pa=parseFloat(a.valeur_fonciere)||0, sa=parseFloat(a.surface_reelle_bati)||0;
+      var pb=parseFloat(b.valeur_fonciere)||0, sb=parseFloat(b.surface_reelle_bati)||0;
+      return d*((sa?Math.round(pa/sa):0)-(sb?Math.round(pb/sb):0));
+    }
+    return 0;
+  });
+  renderDvfTable(tableId, countId, sorted, isExact);
+}
+
+var dvfAutocompleteTimer = null;
+var dvfSelected = null;
+
+function dvfParse(raw) {
+  try { var r = JSON.parse(raw); return r.html || raw; } catch(e) { return raw; }
+}
+
+function dvfAutocomplete(val) {
+  clearTimeout(dvfAutocompleteTimer);
+  var box = document.getElementById('dvf-suggestions');
+  if (!val || val.length < 4) { box.style.display='none'; return; }
+  dvfAutocompleteTimer = setTimeout(function() {
+    fetch(WORKER_URL+'/api/address?q='+encodeURIComponent(val)+'&limit=7',{headers:{'Authorization':'Bearer '+getToken()}})
+      .then(function(r){return r.json();})
+      .then(function(d){try{renderDvfSuggestions(d.features||[]);}catch(e){box.style.display='none';}})
+      .catch(function(){box.style.display='none';});
+  }, 500);
+}
+
+function renderDvfSuggestions(feats) {
+  var box = document.getElementById('dvf-suggestions');
+  if (!feats || !feats.length) { box.style.display='none'; return; }
+  box._feats = feats;
+  box.innerHTML = feats.map(function(f, i) {
+    var p = f.properties;
+    return '<div style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0"'
+      +' onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'white\'"'
+      +' onclick="dvfSelectSuggestion('+i+')">'
+      +'<strong>'+(p.housenumber?p.housenumber+' ':'')+(p.street||p.name||'')+'</strong> '
+      +'<span style="color:#888">'+(p.postcode||'')+' '+(p.city||'')+'</span></div>';
+  }).join('');
+  box.style.display = 'block';
+}
+
+function dvfSelectSuggestion(i) {
+  var box = document.getElementById('dvf-suggestions');
+  var f = box._feats[i]; var p = f.properties;
+  dvfSelected = {
+    lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
+    label:p.label, housenumber:p.housenumber||'',
+    street:p.street||'', postcode:p.postcode||'', city:p.city||'',
+    citycode:p.citycode||'', id:p.id||''
+  };
+  document.getElementById('dvf-input').value = p.label;
+  box.style.display = 'none';
+  dvfFetch();
+}
+
+function dvfSearch() {
+  document.getElementById('dvf-suggestions').style.display = 'none';
+  var val = document.getElementById('dvf-input').value.trim();
+  if (!val) return;
+  if (dvfSelected && document.getElementById('dvf-input').value === dvfSelected.label) { dvfFetch(); return; }
+  dvfSelected = null;
+  document.getElementById('dvf-loading').style.display = 'block';
+  document.getElementById('dvf-results').style.display = 'none';
+  document.getElementById('dvf-error').style.display = 'none';
+  fetch(WORKER_URL+'/api/address?q='+encodeURIComponent(val)+'&limit=1',{headers:{'Authorization':'Bearer '+getToken()}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      try{
+        var feats=d.features||[];
+        if(!feats.length){showDvfError('Adresse introuvable.');return;}
+        var f=feats[0];var p=f.properties;
+        dvfSelected={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],
+          label:p.label,housenumber:p.housenumber||'',street:p.street||'',postcode:p.postcode||'',city:p.city||'',
+          citycode:p.citycode||'',id:p.id||''};
+        document.getElementById('dvf-input').value=p.label;
+        dvfFetch();
+      }catch(e){showDvfError('Erreur géocodage : '+e);}
+    }).catch(function(e){showDvfError('Erreur : '+e);});
+}
+
+function dvfFetch() {
+  var sel = dvfSelected;
+  document.getElementById('dvf-results').style.display = 'none';
+  document.getElementById('dvf-error').style.display = 'none';
+  document.getElementById('dvf-loading').style.display = 'block';
+  document.getElementById('dvf-address-bar').innerHTML =
+    '\uD83D\uDCCD <strong>'+sel.label+'</strong>'
+    +' <span style="color:#aaa;font-size:11px">'+sel.lat.toFixed(5)+', '+sel.lon.toFixed(5)+'</span>';
+
+  var codeCommune = sel.citycode || '75117';
+  var banId = sel.id || '';
+  // id BAN format: "75117_1550_00024" → code voie = 2ème segment
+  var parts = banId.split('_');
+  var codeVoie = parts.length >= 2 ? parts[1] : '';
+  var nomVoie  = (sel.street || '').toUpperCase();
+  var sections = codeCommune === '75117' ? DVF_SECTIONS_75117 : null;
+
+  if (!sections) {
+    showDvfError('Seul Paris 17e est pris en charge pour l\'instant (commune: '+codeCommune+').');
+    return;
+  }
+
+  fetch(WORKER_URL+'/api/dvf?commune='+codeCommune, {
+    headers:{'Authorization':'Bearer '+getToken()}
+  }).then(function(r){return r.json();}).then(function(results){
+    try { dvfProcessResults(results, codeVoie, nomVoie, sel); }
+    catch(e) { showDvfError('Erreur traitement : '+e); }
+  }).catch(function(e){ showDvfError('Erreur DVF : '+e); });
+}
+
+function showDvfError(msg) {
+  document.getElementById('dvf-loading').style.display = 'none';
+  document.getElementById('dvf-error').style.display = 'block';
+  document.getElementById('dvf-error').textContent = '\u274C '+msg;
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest || (!e.target.closest('#dvf-input') && !e.target.closest('#dvf-suggestions'))) {
+    var b = document.getElementById('dvf-suggestions'); if (b) b.style.display='none';
+  }
+});
+
+function dvfTh(label, col, tableId, countId, isExact, align) {
+  var isActive = dvfSortState.col === col;
+  var arrow = isActive ? (dvfSortState.dir === -1 ? ' ↓' : ' ↑') : ' ⇅';
+  var color = isActive ? '#1a1a1a' : '#888';
+  var ta = align || 'left';
+  return '<th style="padding:8px 6px;border-bottom:1px solid #eee;text-align:' + ta
+    + ';white-space:nowrap;cursor:pointer;user-select:none;color:' + color + '"'
+    + ' onclick="dvfSortBy(\'' + col + '\',\'' + tableId + '\',\'' + countId + '\',' + isExact + ')">'
+    + label + '<span style="font-size:10px;margin-left:2px">' + arrow + '</span></th>';
+}
+
+function renderDvfTable(tableId, countId, mutations, isExact) {
+  var cEl = document.getElementById(countId);
+  var tEl = document.getElementById(tableId);
+  if (!mutations.length) {
+    cEl.textContent = '0';
+    tEl.innerHTML = '<div style="font-size:13px;color:#aaa;padding:8px 0">'
+      + (isExact ? 'Aucune transaction \u00e0 ce num\u00e9ro.' : 'Aucune autre vente dans cette rue.') + '</div>';
+    return;
+  }
+  cEl.textContent = mutations.length + ' vente' + (mutations.length > 1 ? 's' : '');
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<thead><tr style="background:#f8f8f8">'
+    + dvfTh('Date', 'date', tableId, countId, isExact)
+    + dvfTh('N\u00b0', 'num', tableId, countId, isExact, 'left')
+    + dvfTh('m\u00b2', 'surf', tableId, countId, isExact, 'right')
+    + dvfTh('Pcs', 'pcs', tableId, countId, isExact, 'right')
+    + dvfTh('Prix', 'prix', tableId, countId, isExact, 'right')
+    + dvfTh('\u20ac/m\u00b2', 'pm2', tableId, countId, isExact, 'right')
+    + '</tr></thead><tbody>';
+  mutations.forEach(function(m, i) {
+    var prix = parseFloat(m.valeur_fonciere) || 0;
+    var surf = parseFloat(m.surface_reelle_bati) || 0;
+    var pm2  = surf ? Math.round(prix / surf) : 0;
+    var num  = (m.adresse_numero || '').toString().replace('.0','').trim();
+    var date = m.date_mutation ? new Date(m.date_mutation).toLocaleDateString('fr-FR') : '';
+    var c    = pm2 ? (pm2 < 8500 ? '#28a745' : pm2 > 11500 ? '#dc3545' : '#1a1a1a') : '#1a1a1a';
+    var tl   = m.type_local || '';
+    var tlBadge = '';
+    if (tl === 'Appartement') tlBadge = '';
+    else if (tl === 'Maison') tlBadge = ' <span style="font-size:10px;background:#e8f4fd;color:#1a6fa8;border-radius:3px;padding:1px 4px">Maison</span>';
+    else if (tl === 'D\u00e9pendance') tlBadge = ' <span style="font-size:10px;background:#f5f5f5;color:#888;border-radius:3px;padding:1px 4px">Dep.</span>';
+    else if (tl) tlBadge = ' <span style="font-size:10px;background:#fff3e0;color:#e67700;border-radius:3px;padding:1px 4px" title="'+tl+'">Autre</span>';
+    html += '<tr style="background:' + (i%2 ? '#fafafa' : 'white') + '">'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;color:#888;white-space:nowrap">' + date + '</td>'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;white-space:nowrap">' + num + tlBadge + '</td>'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right">' + (surf ? Math.round(surf) : '\u2014') + '</td>'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right">' + (m.nombre_pieces_principales || '\u2014') + '</td>'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:500;white-space:nowrap">' + prix.toLocaleString('fr-FR') + ' \u20ac</td>'
+      + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:' + c + ';white-space:nowrap">' + (pm2 ? pm2.toLocaleString('fr-FR') + ' \u20ac' : '\u2014') + '</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  // Stats
+  var pm2s = mutations.map(function(m) {
+    var p = parseFloat(m.valeur_fonciere)||0; var s = parseFloat(m.surface_reelle_bati)||0;
+    return s ? Math.round(p/s) : 0;
+  }).filter(Boolean).sort(function(a,b){return a-b;});
+  if (pm2s.length > 1) {
+    var med = pm2s[Math.floor(pm2s.length/2)];
+    var moy = Math.round(pm2s.reduce(function(a,b){return a+b;},0) / pm2s.length);
+    html += '<div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px;color:#888">'
+      + '<span>M\u00e9diane <strong style="color:#1a1a1a">' + med.toLocaleString('fr-FR') + ' \u20ac/m\u00b2</strong></span>'
+      + '<span>Moyenne <strong style="color:#1a1a1a">' + moy.toLocaleString('fr-FR') + ' \u20ac/m\u00b2</strong></span>'
+      + '<span>Min ' + pm2s[0].toLocaleString('fr-FR') + ' \u20ac/m\u00b2</span>'
+      + '<span>Max ' + pm2s[pm2s.length-1].toLocaleString('fr-FR') + ' \u20ac/m\u00b2</span></div>';
+  }
+  tEl.innerHTML = html;
+}
+
+function showDvfError(msg) {
+  document.getElementById('dvf-loading').style.display = 'none';
+  document.getElementById('dvf-error').style.display = 'block';
+  document.getElementById('dvf-error').textContent = '\u274C ' + msg;
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest || (!e.target.closest('#dvf-input') && !e.target.closest('#dvf-suggestions'))) {
+    var b = document.getElementById('dvf-suggestions'); if (b) b.style.display = 'none';
+  }
+});
+</script>
+
+</body>
