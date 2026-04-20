@@ -2576,45 +2576,35 @@ async function testDVFDebug() {
   var f = geo.features && geo.features[0];
   if (!f) { log.textContent += 'Géocodage échoué\n'; return; }
   var p = f.properties;
-  log.textContent += 'citycode: ' + p.citycode + '\n';
-  log.textContent += 'id BAN: ' + p.id + '\n';
   var codeVoie = p.id.split('_')[1];
+  log.textContent += 'citycode BAN: ' + p.citycode + '\n';
   log.textContent += 'codeVoie BAN: ' + codeVoie + '\n\n';
-  log.textContent += 'Interrogation DVF...\n';
-  var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+p.citycode, {headers:{'Authorization':'Bearer '+getToken()}});
-  var sections = await r2.json();
-  log.textContent += 'Sections trouvées: ' + sections.length + '\n\n';
-  
-  // Chercher LISBONNE dans toutes les mutations
-  var lisbonne = [];
-  var total = 0;
-  sections.forEach(function(s) {
-    s.mutations.forEach(function(m) {
-      if ((m.adresse_nom_voie||'').toUpperCase().indexOf('LISBONNE') >= 0) {
-        lisbonne.push({section: s.section, code: m.adresse_code_voie, nom: m.adresse_nom_voie});
-      }
-      if (m.adresse_code_voie === codeVoie) total++;
-    });
-  });
-  
-  if (lisbonne.length > 0) {
-    log.textContent += 'Rue Lisbonne trouvée dans DVF!\n';
-    log.textContent += 'Code voie DVF: ' + lisbonne[0].code + '\n';
-    log.textContent += 'Code voie BAN: ' + codeVoie + '\n';
-    log.textContent += 'Correspondent: ' + (lisbonne[0].code === codeVoie ? 'OUI ✅' : 'NON ❌') + '\n';
-    log.textContent += 'Transactions avec code BAN: ' + total + '\n';
-  } else {
-    log.textContent += 'Rue Lisbonne ABSENTE de DVF pour 75108\n\n';
-    log.textContent += 'Exemples voies trouvées:\n';
-    var voies = {};
-    sections.slice(0,3).forEach(function(s){
-      s.mutations.slice(0,3).forEach(function(m){
-        voies[m.adresse_code_voie] = m.adresse_nom_voie;
+
+  // Tester avec 75108 ET 75056
+  var communes = [p.citycode, '75056'];
+  for (var ci = 0; ci < communes.length; ci++) {
+    var commune = communes[ci];
+    log.textContent += '--- Test commune ' + commune + ' ---\n';
+    var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+commune, {headers:{'Authorization':'Bearer '+getToken()}});
+    var sections = await r2.json();
+    log.textContent += 'Sections: ' + sections.length + '\n';
+    var lisbonne = [];
+    sections.forEach(function(s) {
+      s.mutations.forEach(function(m) {
+        if ((m.adresse_nom_voie||'').toUpperCase().indexOf('LISBONNE') >= 0) {
+          if (!lisbonne.some(function(x){return x.code===m.adresse_code_voie;}))
+            lisbonne.push({code: m.adresse_code_voie, nom: m.adresse_nom_voie, count: 0});
+          lisbonne.find(function(x){return x.code===m.adresse_code_voie;}).count++;
+        }
       });
     });
-    Object.keys(voies).slice(0,8).forEach(function(k){
-      log.textContent += k + ' = ' + voies[k] + '\n';
-    });
+    if (lisbonne.length > 0) {
+      log.textContent += '✅ Lisbonne trouvée!\n';
+      lisbonne.forEach(function(v){ log.textContent += '  code='+v.code+' nom='+v.nom+' ('+v.count+' transactions)\n'; });
+    } else {
+      log.textContent += '❌ Lisbonne absente\n';
+    }
+    log.textContent += '\n';
   }
 }
 </script>
