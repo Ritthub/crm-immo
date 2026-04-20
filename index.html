@@ -293,6 +293,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
     <button class="tab" onclick="showTab('visits')">Visites</button>
     <button class="tab" onclick="showTab('criteria')">Ma recherche</button>
     <button class="tab" onclick="showTab('dvf')">📊 Prix du marché</button>
+    <button class="tab" onclick="showTab('eval')">💰 Évaluation</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -519,6 +520,183 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
       <div class="spinner" style="margin:0 auto 12px"></div>Recherche en cours…
     </div>
     <div id="dvf-error" style="display:none;padding:1rem;color:#dc3545;font-size:13px;background:#fff0f0;border-radius:8px;margin-top:8px"></div>
+  </div>
+
+  <!-- ONGLET ÉVALUATION -->
+  <div id="eval" class="section">
+
+    <!-- Formulaire -->
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-header" style="margin-bottom:16px">
+        <div class="card-title">💰 Évaluer un bien</div>
+        <button class="btn btn-sm" onclick="evalReset()">↺ Réinitialiser</button>
+      </div>
+
+      <!-- Lien depuis annonce -->
+      <div id="eval-from-listing" style="display:none;margin-bottom:14px;padding:10px 14px;background:var(--primary-light);border-radius:10px;font-size:13px">
+        📌 <strong id="eval-listing-title"></strong>
+        <button onclick="evalDetachListing()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;margin-left:8px">× Détacher</button>
+      </div>
+
+      <!-- Adresse -->
+      <div class="form-group">
+        <label class="form-label">Adresse du bien</label>
+        <div style="position:relative">
+          <input class="form-input" id="eval-address" placeholder="Ex: 24 rue Cardinet Paris 17" autocomplete="off"
+            oninput="evalAutocomplete(this.value)" onkeydown="if(event.key==='Enter')evalSelectFirst()">
+          <div id="eval-suggestions" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:100;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:200px;overflow-y:auto"></div>
+        </div>
+        <div id="eval-address-info" style="display:none;font-size:11px;color:var(--ink-light);margin-top:4px"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Surface habitable (m²) *</label>
+          <input class="form-input" id="eval-surface" type="number" placeholder="75" oninput="evalUpdate()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre de pièces</label>
+          <input class="form-input" id="eval-pieces" type="number" placeholder="3" oninput="evalUpdate()">
+        </div>
+      </div>
+
+      <!-- Surfaces annexes -->
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink)">Surfaces annexes</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:3px">Balcon (m²) <span style="color:var(--ink-faint)">× 0,3</span></label>
+          <input class="form-input" id="eval-balcon" type="number" placeholder="0" style="padding:8px 10px;font-size:14px" oninput="evalUpdate()">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:3px">Terrasse (m²) <span style="color:var(--ink-faint)">× 0,3</span></label>
+          <input class="form-input" id="eval-terrasse" type="number" placeholder="0" style="padding:8px 10px;font-size:14px" oninput="evalUpdate()">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:3px">Cave/parking (m²) <span style="color:var(--ink-faint)">× 0,3</span></label>
+          <input class="form-input" id="eval-cave" type="number" placeholder="0" style="padding:8px 10px;font-size:14px" oninput="evalUpdate()">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:3px">Combles (m²) <span style="color:var(--ink-faint)">× 0,3</span></label>
+          <input class="form-input" id="eval-combles" type="number" placeholder="0" style="padding:8px 10px;font-size:14px" oninput="evalUpdate()">
+        </div>
+      </div>
+
+      <!-- Grille d'ajustement -->
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink)">Ajustements</div>
+      <div id="eval-adjustments" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <!-- Étage -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Étage</label>
+          <select class="form-input" id="eval-etage" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="0">-- Choisir --</option>
+            <option value="-20">RdC sur rue (-20%)</option>
+            <option value="-15">RdC sur cour (-15%)</option>
+            <option value="-7">1er étage (-7%)</option>
+            <option value="0">2e étage (ref)</option>
+            <option value="2.5">3e + ascenseur (+2,5%)</option>
+            <option value="5">4e + ascenseur (+5%)</option>
+            <option value="7.5">5e + ascenseur (+7,5%)</option>
+            <option value="10">6e + ascenseur (+10%)</option>
+            <option value="-5">Sans ascenseur au-dessus 3e (-5%)</option>
+          </select>
+        </div>
+        <!-- Vue -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Vue / orientation</label>
+          <select class="form-input" id="eval-vue" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="0">Standard</option>
+            <option value="-10">Cour sombre (-10%)</option>
+            <option value="-10">Vis-à-vis &lt;10m (-10%)</option>
+            <option value="3">Double orientation (+3%)</option>
+            <option value="10">Belle vue (+10%)</option>
+            <option value="15">Très belle vue (+15%)</option>
+          </select>
+        </div>
+        <!-- Bruit -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Bruit / nuisances</label>
+          <select class="form-input" id="eval-bruit" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="0">Rue calme</option>
+            <option value="-10">Bruit modéré (-10%)</option>
+            <option value="-17.5">Circulation importante (-17,5%)</option>
+            <option value="-20">Commerce/café tardif (-20%)</option>
+          </select>
+        </div>
+        <!-- État -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">État du bien</label>
+          <select class="form-input" id="eval-etat" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="17.5">Neuf / refait à neuf (+17,5%)</option>
+            <option value="0">Bon état (ref)</option>
+            <option value="-7.5">Rafraîchissement (-7,5%)</option>
+            <option value="-20">Travaux importants (-20%)</option>
+            <option value="-30">Gros travaux (-30%)</option>
+          </select>
+        </div>
+        <!-- Extérieur -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Extérieur</label>
+          <select class="form-input" id="eval-exterieur" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="0">Aucun</option>
+            <option value="5">Balcon (+5%)</option>
+            <option value="10">Terrasse (+10%)</option>
+            <option value="15">Jardin (+15%)</option>
+          </select>
+        </div>
+        <!-- DPE -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">DPE</label>
+          <select class="form-input" id="eval-dpe" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="5">A / B (+5%)</option>
+            <option value="0">C / D (ref)</option>
+            <option value="-5">E (-5%)</option>
+            <option value="-10">F / G (-10%)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Prix demandé -->
+      <div class="form-group">
+        <label class="form-label">Prix demandé (€) <span style="font-weight:400;color:var(--ink-light)">(optionnel)</span></label>
+        <input class="form-input" id="eval-prix-demande" type="number" placeholder="850000" oninput="evalUpdate()">
+      </div>
+
+      <!-- Slider marge de négociation -->
+      <div class="form-group">
+        <label class="form-label">Marge de négociation : <strong id="eval-marge-val">5%</strong></label>
+        <input type="range" id="eval-marge" min="0" max="15" step="1" value="5"
+          style="width:100%;accent-color:var(--primary)" oninput="document.getElementById('eval-marge-val').textContent=this.value+'%';evalUpdate()">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-faint)">
+          <span>0%</span><span>5%</span><span>10%</span><span>15%</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="evalSubmit()" id="eval-submit-btn" style="width:100%;padding:14px;font-size:15px;border-radius:12px">
+        ✦ Calculer l'estimation
+      </button>
+    </div>
+
+    <!-- Résultat -->
+    <div id="eval-result" style="display:none">
+      <div class="card" style="margin-bottom:1rem;border:2px solid var(--primary)">
+        <div class="card-title" style="margin-bottom:16px">📊 Résultat de l'évaluation</div>
+        <div id="eval-result-content"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="evalSave()" style="flex:1">💾 Sauvegarder</button>
+          <button class="btn" onclick="document.getElementById('eval-result').style.display='none'" style="flex:1">✕ Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom:12px">
+        <div class="card-title">🕐 Historique des évaluations</div>
+        <span id="eval-history-count" class="badge b-gray"></span>
+      </div>
+      <div id="eval-history-list"><div class="empty">Aucune évaluation sauvegardée.</div></div>
+    </div>
+
   </div>
 
 <!-- MODAL: Nouvelle annonce -->
@@ -909,6 +1087,8 @@ async function loadApp() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderAll();
+    // Charger évaluations
+    if (d.evaluations) { evaluations = d.evaluations; renderEvalHistory(); }
     setSaveBadge('saved', 'Connecté');
   } catch(e) {
     AGENCIES = DEFAULT_AGENCIES.slice();
@@ -2087,6 +2267,13 @@ function renderListings(){
       voir.addEventListener('click',(function(s){return function(e){e.preventDefault();openLink(s);};})(sid));
       actions.appendChild(voir);
     }
+    // Bouton Évaluer
+    var evalBtn=document.createElement('button');
+    evalBtn.className='btn btn-sm';
+    evalBtn.style.cssText='font-size:11px;padding:3px 8px;background:var(--primary-light);color:var(--primary);border:1px solid var(--primary);';
+    evalBtn.textContent='💰 Évaluer';
+    evalBtn.addEventListener('click',(function(s){return function(){evalFromListing(s);};})(sid));
+    actions.appendChild(evalBtn);
     content.appendChild(actions);
 
     // Description
@@ -2296,7 +2483,292 @@ function renderCriteria(){
   document.getElementById('criteria-display').innerHTML=rows.length?rows.map(function(r){return '<div class="criteria-row"><span class="criteria-key">'+r[0]+'</span><span class="criteria-val">'+r[1]+'</span></div>';}).join(''):'<div style="font-size:13px;color:#aaa;padding:10px 0">Aucun critere defini.</div>';
 }
 
-// ===================== DVF =====================
+// ===================== ÉVALUATION =====================
+var evalSelected = null; // adresse géocodée
+var evalAutocompleteTimer = null;
+var evalListingId = null; // si lié à une annonce
+var evaluations = []; // chargé depuis crm_data
+
+function evalAutocomplete(val) {
+  clearTimeout(evalAutocompleteTimer);
+  var box = document.getElementById('eval-suggestions');
+  if (!val || val.length < 4) { box.style.display='none'; return; }
+  evalAutocompleteTimer = setTimeout(function() {
+    fetch(WORKER_URL+'/api/address?q='+encodeURIComponent(val)+'&limit=6', {
+      headers:{'Authorization':'Bearer '+getToken()}
+    }).then(function(r){return r.json();}).then(function(d){
+      renderEvalSuggestions(d.features||[]);
+    }).catch(function(){ box.style.display='none'; });
+  }, 400);
+}
+
+function renderEvalSuggestions(feats) {
+  var box = document.getElementById('eval-suggestions');
+  if (!feats.length) { box.style.display='none'; return; }
+  box._feats = feats;
+  box.innerHTML = feats.map(function(f,i) {
+    var p = f.properties;
+    return '<div style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"'
+      +' onmouseover="this.style.background=\'var(--surface-2)\'" onmouseout="this.style.background=\'white\'"'
+      +' onclick="evalSelectSuggestion('+i+')">'
+      +'<strong>'+(p.housenumber?p.housenumber+' ':'')+(p.street||p.name||'')+'</strong> '
+      +'<span style="color:var(--ink-light)">'+(p.postcode||'')+' '+(p.city||'')+'</span></div>';
+  }).join('');
+  box.style.display='block';
+}
+
+function evalSelectSuggestion(i) {
+  var box = document.getElementById('eval-suggestions');
+  var f = box._feats[i]; var p = f.properties;
+  evalSelected = {
+    lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
+    label:p.label, postcode:p.postcode||'', citycode:p.citycode||'',
+    street:p.street||'', housenumber:p.housenumber||''
+  };
+  document.getElementById('eval-address').value = p.label;
+  document.getElementById('eval-address-info').style.display='block';
+  document.getElementById('eval-address-info').textContent = 'Code postal: '+p.postcode+' · Commune: '+p.citycode;
+  box.style.display='none';
+}
+
+function evalSelectFirst() {
+  var box = document.getElementById('eval-suggestions');
+  if (box._feats && box._feats.length) evalSelectSuggestion(0);
+}
+
+function evalUpdate() {
+  // Recalcul en temps réel si on a déjà un résultat
+  if (document.getElementById('eval-result').style.display !== 'none') {
+    evalCalculate(null); // recalculer sans refetch DVF
+  }
+}
+
+function evalGetAdjustments() {
+  var total = 0;
+  var details = [];
+  var fields = [
+    {id:'eval-etage',    label:'Étage'},
+    {id:'eval-vue',      label:'Vue'},
+    {id:'eval-bruit',    label:'Bruit'},
+    {id:'eval-etat',     label:'État'},
+    {id:'eval-exterieur',label:'Extérieur'},
+    {id:'eval-dpe',      label:'DPE'},
+  ];
+  fields.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    var val = parseFloat(el.value) || 0;
+    if (val !== 0) {
+      total += val;
+      details.push({label: f.label, val: val, text: el.options[el.selectedIndex].text});
+    }
+  });
+  return {total: total, details: details};
+}
+
+async function evalSubmit() {
+  var surface = parseFloat(document.getElementById('eval-surface').value) || 0;
+  if (!surface) { alert('Veuillez saisir la surface habitable.'); return; }
+  if (!evalSelected) { alert('Veuillez sélectionner une adresse.'); return; }
+
+  var btn = document.getElementById('eval-submit-btn');
+  btn.disabled=true; btn.textContent='⏳ Récupération des comparables…';
+
+  try {
+    // Récupérer comparables DVF via Worker
+    var url = WORKER_URL+'/api/eval-dvf?code_postal='+encodeURIComponent(evalSelected.postcode)
+      +'&code_commune='+encodeURIComponent(evalSelected.citycode)
+      +'&surface='+surface;
+    var r = await fetch(url, {headers:{'Authorization':'Bearer '+getToken()}});
+    var dvf = await r.json();
+    evalCalculate(dvf);
+  } catch(e) {
+    evalCalculate(null);
+  }
+
+  btn.disabled=false; btn.textContent='✦ Calculer l\'estimation';
+  document.getElementById('eval-result').style.display='block';
+  document.getElementById('eval-result').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function evalCalculate(dvf) {
+  var surface   = parseFloat(document.getElementById('eval-surface').value) || 0;
+  var balcon    = parseFloat(document.getElementById('eval-balcon').value) || 0;
+  var terrasse  = parseFloat(document.getElementById('eval-terrasse').value) || 0;
+  var cave      = parseFloat(document.getElementById('eval-cave').value) || 0;
+  var combles   = parseFloat(document.getElementById('eval-combles').value) || 0;
+  var marge     = parseInt(document.getElementById('eval-marge').value) || 5;
+  var prixDmd   = parseFloat(document.getElementById('eval-prix-demande').value) || 0;
+
+  var adj = evalGetAdjustments();
+  var surfacePond = surface + (balcon+terrasse+cave+combles)*0.3;
+
+  // Prix médian/m² : depuis DVF si dispo, sinon message
+  var medianeSource = '';
+  var pm2 = 0;
+  if (dvf && dvf.mediane_pm2 && dvf.mediane_pm2 > 0) {
+    pm2 = dvf.mediane_pm2;
+    medianeSource = dvf.nb_comparables + ' transactions DVF (2 ans, surface ±30%)';
+    window._lastDvf = dvf; // cache pour recalculs
+  } else if (window._lastDvf && window._lastDvf.mediane_pm2) {
+    pm2 = window._lastDvf.mediane_pm2;
+    medianeSource = window._lastDvf.nb_comparables + ' transactions DVF (2 ans, surface ±30%) — données en cache';
+  }
+
+  if (!pm2) {
+    document.getElementById('eval-result-content').innerHTML =
+      '<div style="color:var(--primary);font-size:13px">❌ Aucun comparable DVF trouvé pour cette adresse.<br>Vérifiez que les données DVF sont disponibles dans Supabase pour ce code postal.</div>';
+    return;
+  }
+
+  // Calcul valeur de base
+  var valeurBase = surfacePond * pm2;
+  // Appliquer ajustements
+  var facteur = 1 + (adj.total / 100);
+  var valeurEstimee = Math.round(valeurBase * facteur);
+  var prixOffre = Math.round(valeurEstimee * (1 - marge/100));
+
+  // HTML résultat
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">'
+    +'<div style="text-align:center;padding:14px;background:var(--surface-2);border-radius:12px">'
+    +'<div style="font-size:11px;color:var(--ink-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Médiane DVF</div>'
+    +'<div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">'+pm2.toLocaleString('fr-FR')+' €/m²</div>'
+    +'<div style="font-size:10px;color:var(--ink-faint);margin-top:4px">'+medianeSource+'</div>'
+    +'</div>'
+    +'<div style="text-align:center;padding:14px;background:var(--primary-light);border-radius:12px;border:2px solid var(--primary)">'
+    +'<div style="font-size:11px;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700">Valeur estimée</div>'
+    +'<div style="font-size:20px;font-weight:800;color:var(--primary);letter-spacing:-0.03em">'+valeurEstimee.toLocaleString('fr-FR')+' €</div>'
+    +'<div style="font-size:11px;color:var(--primary);margin-top:4px">'+Math.round(valeurEstimee/surface).toLocaleString('fr-FR')+' €/m²</div>'
+    +'</div>'
+    +'<div style="text-align:center;padding:14px;background:#f0fdf4;border-radius:12px;border:2px solid #22c55e">'
+    +'<div style="font-size:11px;color:#166534;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700">Prix d\'offre (-'+marge+'%)</div>'
+    +'<div style="font-size:20px;font-weight:800;color:#166534;letter-spacing:-0.03em">'+prixOffre.toLocaleString('fr-FR')+' €</div>'
+    +(prixDmd?'<div style="font-size:10px;color:#166534;margin-top:4px">Écart prix demandé: '+(prixDmd-prixOffre>0?'-':'+')+(Math.abs(prixDmd-prixOffre)/1000).toFixed(0)+'k€</div>':'')
+    +'</div></div>';
+
+  // Détail surface
+  html += '<div style="font-size:12px;color:var(--ink-light);margin-bottom:12px">'
+    +'Surface pondérée : '+surface+' m² + annexes ('+((balcon+terrasse+cave+combles)*0.3).toFixed(1)+' m² eq.) = '+surfacePond.toFixed(1)+' m² eq.'
+    +'</div>';
+
+  // Ajustements appliqués
+  if (adj.details.length > 0) {
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Ajustements appliqués</div>';
+    adj.details.forEach(function(d) {
+      var c = d.val > 0 ? '#166534' : '#9f1239';
+      var bg = d.val > 0 ? '#f0fdf4' : 'var(--primary-light)';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:'+bg+';border-radius:6px;margin-bottom:4px;font-size:12px">'
+        +'<span>'+d.text+'</span>'
+        +'<strong style="color:'+c+'">'+(d.val>0?'+':'')+d.val+'%</strong></div>';
+    });
+    html += '<div style="display:flex;justify-content:space-between;padding:6px 10px;font-size:13px;font-weight:700;border-top:1px solid var(--border);margin-top:4px">'
+      +'<span>Total ajustements</span>'
+      +'<span>'+(adj.total>0?'+':'')+adj.total.toFixed(1)+'%</span></div></div>';
+  }
+
+  document.getElementById('eval-result-content').innerHTML = html;
+
+  // Stocker pour sauvegarde
+  window._lastEval = {
+    adresse: evalSelected ? evalSelected.label : document.getElementById('eval-address').value,
+    surface: surface, surfacePond: surfacePond,
+    pm2: pm2, valeurEstimee: valeurEstimee, prixOffre: prixOffre,
+    marge: marge, adj: adj, prixDmd: prixDmd,
+    listingId: evalListingId,
+    date: new Date().toISOString(),
+    id: Date.now()
+  };
+}
+
+function evalSave() {
+  if (!window._lastEval) return;
+  evaluations.unshift(window._lastEval);
+  api('/api/data?key=evaluations', 'POST', evaluations).catch(function(){});
+  renderEvalHistory();
+  document.getElementById('eval-result').style.display='none';
+  alert('Évaluation sauvegardée !');
+}
+
+function renderEvalHistory() {
+  var el = document.getElementById('eval-history-list');
+  var count = document.getElementById('eval-history-count');
+  count.textContent = evaluations.length + ' évaluation' + (evaluations.length>1?'s':'');
+  if (!evaluations.length) {
+    el.innerHTML = '<div class="empty">Aucune évaluation sauvegardée.</div>';
+    return;
+  }
+  el.innerHTML = evaluations.map(function(e, i) {
+    var listing = e.listingId ? listings.find(function(l){return String(l.id)===String(e.listingId);}) : null;
+    return '<div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:var(--surface)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">'
+      +'<div>'
+      +'<div style="font-size:13px;font-weight:600">'+e.adresse+'</div>'
+      +(listing?'<div style="font-size:11px;color:var(--primary);margin-top:2px">📌 '+listing.title+'</div>':'')
+      +'<div style="font-size:11px;color:var(--ink-faint);margin-top:2px">'+new Date(e.date).toLocaleDateString('fr-FR')+'</div>'
+      +'</div>'
+      +'<button onclick="evalDeleteItem('+i+')" style="background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:0">×</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
+      +'<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:var(--primary-light);border-radius:8px">'
+      +'<div style="font-size:10px;color:var(--primary);font-weight:600">ESTIMÉ</div>'
+      +'<div style="font-size:15px;font-weight:800;color:var(--primary)">'+e.valeurEstimee.toLocaleString('fr-FR')+' €</div>'
+      +'</div>'
+      +'<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:#f0fdf4;border-radius:8px">'
+      +'<div style="font-size:10px;color:#166534;font-weight:600">OFFRE (-'+e.marge+'%)</div>'
+      +'<div style="font-size:15px;font-weight:800;color:#166534">'+e.prixOffre.toLocaleString('fr-FR')+' €</div>'
+      +'</div>'
+      +'<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:var(--surface-2);border-radius:8px">'
+      +'<div style="font-size:10px;color:var(--ink-light);font-weight:600">SURFACE</div>'
+      +'<div style="font-size:15px;font-weight:800">'+e.surface+' m²</div>'
+      +'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function evalDeleteItem(i) {
+  if (!confirm('Supprimer cette évaluation ?')) return;
+  evaluations.splice(i, 1);
+  api('/api/data?key=evaluations', 'POST', evaluations).catch(function(){});
+  renderEvalHistory();
+}
+
+function evalReset() {
+  evalSelected = null; evalListingId = null; window._lastEval = null; window._lastDvf = null;
+  ['eval-address','eval-surface','eval-pieces','eval-balcon','eval-terrasse','eval-cave','eval-combles','eval-prix-demande'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('eval-address-info').style.display='none';
+  document.getElementById('eval-from-listing').style.display='none';
+  document.getElementById('eval-result').style.display='none';
+  document.getElementById('eval-marge').value=5;
+  document.getElementById('eval-marge-val').textContent='5%';
+}
+
+function evalDetachListing() {
+  evalListingId=null;
+  document.getElementById('eval-from-listing').style.display='none';
+}
+
+// Appelé depuis onglet Annonces
+function evalFromListing(listingId) {
+  var l = listings.find(function(x){return String(x.id)===String(listingId);});
+  if (!l) return;
+  evalReset();
+  evalListingId = listingId;
+  document.getElementById('eval-from-listing').style.display='block';
+  document.getElementById('eval-listing-title').textContent = l.title;
+  if (l.surface) document.getElementById('eval-surface').value = l.surface;
+  if (l.rooms)   document.getElementById('eval-pieces').value = l.rooms;
+  if (l.price)   document.getElementById('eval-prix-demande').value = l.price;
+  // Pré-remplir adresse depuis le titre
+  if (l.title)   document.getElementById('eval-address').value = l.title;
+  showTab('eval');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest || !e.target.closest('#eval-address')) {
+    var b=document.getElementById('eval-suggestions'); if(b) b.style.display='none';
+  }
+});
 // Sections cadastrales de Paris 17e (75117) — liste fixe
 var DVF_SECTIONS_75117 = [
   '000AB','000AC','000AD','000AE','000AF','000AG','000AH','000AI','000AK','000AL',
