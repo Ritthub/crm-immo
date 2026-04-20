@@ -2620,4 +2620,19 @@ async function testDVFDebug() {
   <pre id="dvf-debug-log" style="font-size:11px;max-height:280px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333;line-height:1.5"></pre>
 </div>
 
+<script>
+async function testTabularAPI() {
+  var log = document.getElementById('dvf-debug-log');
+  log.textContent = 'Test API tabulaire...\n';
+  var url = 'https://tabular-api.data.gouv.fr/api/resources/90a98de0-f562-4328-aa16-fe0dd1dca60f/data/?code_postal__exact=75008&adresse_nom_voie__contains=LISBONNE&page_size=10';
+  var r = await fetch(url);
+  log.textContent += 'Status: ' + r.status + '\n';
+  var d = await r.json();
+  log.textContent += JSON.stringify(d).substring(0, 800) + '\n';
+}
+</script>
+<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:white;border:2px solid blue;padding:8px;border-radius:8px">
+  <button onclick="testTabularAPI()" style="background:blue;color:white;border:none;padding:8px;border-radius:6px;cursor:pointer">🔵 Test Tabulaire</button>
+</div>
+  
 </body>
