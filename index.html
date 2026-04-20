@@ -294,6 +294,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
     <button class="tab" onclick="showTab('criteria')">Ma recherche</button>
     <button class="tab" onclick="showTab('dvf')">📊 Prix du marché</button>
     <button class="tab" onclick="showTab('eval')">💰 Évaluation</button>
+    <button class="tab" onclick="showTab('params')">⚙️ Paramètres</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -653,6 +654,28 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
             <option value="-10">F / G (-10%)</option>
           </select>
         </div>
+        <!-- Luminosité -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Luminosité</label>
+          <select class="form-input" id="eval-luminosite" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="-15">Très sombre — cour, nord, vis-à-vis &lt;5m (-15%)</option>
+            <option value="-8">Sombre — peu de lumière, orientation nord (-8%)</option>
+            <option value="0">Standard — rue parisienne, luminosité correcte (ref)</option>
+            <option value="5">Lumineux — bonne expo, fenêtres larges (+5%)</option>
+            <option value="10">Très lumineux — ensoleillé, vue dégagée, sud (+10%)</option>
+          </select>
+        </div>
+        <!-- Hauteur sous plafond -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="font-size:12px">Hauteur sous plafond</label>
+          <select class="form-input" id="eval-plafond" style="padding:8px 10px;font-size:13px" onchange="evalUpdate()">
+            <option value="-5">&lt; 2,50m — bas, mansardé (-5%)</option>
+            <option value="0">2,50–2,70m — standard moderne (ref)</option>
+            <option value="3">2,70–3,00m — bon, haussmannien (+3%)</option>
+            <option value="8">3,00–3,50m — haut plafond, haussmannien noble (+8%)</option>
+            <option value="15">&gt; 3,50m — exceptionnel, mezzanine possible (+15%)</option>
+          </select>
+        </div>
       </div>
 
       <!-- Prix demandé -->
@@ -698,6 +721,23 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
     </div>
 
   </div>
+
+<!-- ONGLET PARAMÈTRES -->
+<div id="params" class="section">
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-header" style="margin-bottom:20px">
+      <div class="card-title">⚙️ Grille d'ajustement</div>
+      <button class="btn btn-sm" onclick="paramsReset()">↺ Valeurs par défaut</button>
+    </div>
+    <p style="font-size:13px;color:var(--ink-light);margin-bottom:20px">
+      Modifiez les décotes/surcotes utilisées dans l'onglet Évaluation. Les valeurs sont en pourcentage (ex: -10 pour -10%).
+    </p>
+    <div id="params-grid"></div>
+    <button class="btn btn-primary" onclick="paramsSave()" style="width:100%;margin-top:16px;padding:12px">
+      💾 Sauvegarder les paramètres
+    </button>
+  </div>
+</div>
 
 <!-- MODAL: Nouvelle annonce -->
 <div class="modal-overlay" id="m-listing">
@@ -1089,6 +1129,9 @@ async function loadApp() {
     renderAll();
     // Charger évaluations
     if (d.evaluations) { evaluations = d.evaluations; renderEvalHistory(); }
+    // Charger paramètres de scoring
+    if (d.scoring_params) { scoringParams = d.scoring_params; }
+    renderParamsGrid();
     setSaveBadge('saved', 'Connecté');
   } catch(e) {
     AGENCIES = DEFAULT_AGENCIES.slice();
@@ -2483,7 +2526,134 @@ function renderCriteria(){
   document.getElementById('criteria-display').innerHTML=rows.length?rows.map(function(r){return '<div class="criteria-row"><span class="criteria-key">'+r[0]+'</span><span class="criteria-val">'+r[1]+'</span></div>';}).join(''):'<div style="font-size:13px;color:#aaa;padding:10px 0">Aucun critere defini.</div>';
 }
 
-// ===================== ÉVALUATION =====================
+// ===================== PARAMÈTRES =====================
+
+var DEFAULT_SCORING_PARAMS = [
+  {key:'etage', label:'Étage', options:[
+    {label:'RdC sur rue', val:-20},
+    {label:'RdC sur cour', val:-15},
+    {label:'1er étage', val:-7},
+    {label:'2e étage (ref)', val:0},
+    {label:'3e + ascenseur', val:2.5},
+    {label:'4e + ascenseur', val:5},
+    {label:'5e + ascenseur', val:7.5},
+    {label:'6e + ascenseur', val:10},
+    {label:'Sans ascenseur > 3e', val:-5},
+  ]},
+  {key:'vue', label:'Vue / orientation', options:[
+    {label:'Standard (ref)', val:0},
+    {label:'Cour sombre', val:-10},
+    {label:'Vis-à-vis < 10m', val:-10},
+    {label:'Double orientation', val:3},
+    {label:'Belle vue', val:10},
+    {label:'Très belle vue', val:15},
+  ]},
+  {key:'bruit', label:'Bruit / nuisances', options:[
+    {label:'Rue calme (ref)', val:0},
+    {label:'Bruit modéré', val:-10},
+    {label:'Circulation importante', val:-17.5},
+    {label:'Commerce/café tardif', val:-20},
+  ]},
+  {key:'etat', label:'État du bien', options:[
+    {label:'Neuf / refait à neuf', val:17.5},
+    {label:'Bon état (ref)', val:0},
+    {label:'Rafraîchissement', val:-7.5},
+    {label:'Travaux importants', val:-20},
+    {label:'Gros travaux', val:-30},
+  ]},
+  {key:'exterieur', label:'Extérieur', options:[
+    {label:'Aucun (ref)', val:0},
+    {label:'Balcon', val:5},
+    {label:'Terrasse', val:10},
+    {label:'Jardin', val:15},
+  ]},
+  {key:'dpe', label:'DPE', options:[
+    {label:'A / B', val:5},
+    {label:'C / D (ref)', val:0},
+    {label:'E', val:-5},
+    {label:'F / G', val:-10},
+  ]},
+  {key:'luminosite', label:'Luminosité', options:[
+    {label:'Très sombre — cour, nord, vis-à-vis < 5m', val:-15},
+    {label:'Sombre — peu de lumière, nord', val:-8},
+    {label:'Standard — rue parisienne (ref)', val:0},
+    {label:'Lumineux — bonne expo, fenêtres larges', val:5},
+    {label:'Très lumineux — ensoleillé, vue dégagée, sud', val:10},
+  ]},
+  {key:'plafond', label:'Hauteur sous plafond', options:[
+    {label:'< 2,50m — bas, mansardé', val:-5},
+    {label:'2,50–2,70m — standard moderne (ref)', val:0},
+    {label:'2,70–3,00m — bon, haussmannien', val:3},
+    {label:'3,00–3,50m — haut plafond noble', val:8},
+    {label:'> 3,50m — exceptionnel, mezzanine', val:15},
+  ]},
+];
+
+var scoringParams = JSON.parse(JSON.stringify(DEFAULT_SCORING_PARAMS)); // deep copy
+
+function renderParamsGrid() {
+  var el = document.getElementById('params-grid');
+  if (!el) return;
+  el.innerHTML = scoringParams.map(function(criterion) {
+    return '<div style="margin-bottom:20px;border:1px solid var(--border);border-radius:12px;overflow:hidden">'
+      +'<div style="background:var(--surface-2);padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink)">'
+      +criterion.label+'</div>'
+      +'<div style="padding:12px 14px">'
+      +criterion.options.map(function(opt, i) {
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          +'<div style="flex:1;font-size:12px;color:var(--ink-light)">'+opt.label+'</div>'
+          +'<div style="display:flex;align-items:center;gap:6px">'
+          +'<input type="number" step="0.5" value="'+opt.val+'"'
+          +' data-criterion="'+criterion.key+'" data-index="'+i+'"'
+          +' onchange="paramsUpdate(this)"'
+          +' style="width:72px;padding:5px 8px;font-size:13px;text-align:right;border:1px solid var(--border);border-radius:6px;font-family:inherit">'
+          +'<span style="font-size:12px;color:var(--ink-faint)">%</span>'
+          +'</div></div>';
+      }).join('')
+      +'</div></div>';
+  }).join('');
+}
+
+function paramsUpdate(input) {
+  var key = input.getAttribute('data-criterion');
+  var idx = parseInt(input.getAttribute('data-index'));
+  var val = parseFloat(input.value);
+  if (isNaN(val)) return;
+  var criterion = scoringParams.find(function(c){ return c.key === key; });
+  if (criterion) criterion.options[idx].val = val;
+  // Mettre à jour le select correspondant dans le formulaire éval
+  syncEvalSelects();
+}
+
+function syncEvalSelects() {
+  // Resynchroniser les selects de l'onglet éval avec les scoringParams actuels
+  scoringParams.forEach(function(criterion) {
+    var sel = document.getElementById('eval-'+criterion.key);
+    if (!sel) return;
+    // Reconstruire les options
+    var currentVal = parseFloat(sel.value);
+    sel.innerHTML = criterion.options.map(function(opt) {
+      var pct = opt.val > 0 ? '(+'+opt.val+'%)' : opt.val < 0 ? '('+opt.val+'%)' : '(ref)';
+      return '<option value="'+opt.val+'"'+(opt.val===currentVal?' selected':'')+'>'
+        +opt.label.replace(/\s*[\(\-\+][0-9].*$/, '')+' '+pct+'</option>';
+    }).join('');
+  });
+}
+
+async function paramsSave() {
+  await api('/api/data?key=scoring_params', 'POST', scoringParams).catch(function(){});
+  syncEvalSelects();
+  alert('Paramètres sauvegardés !');
+}
+
+function paramsReset() {
+  if (!confirm('Réinitialiser tous les paramètres aux valeurs par défaut ?')) return;
+  scoringParams = JSON.parse(JSON.stringify(DEFAULT_SCORING_PARAMS));
+  renderParamsGrid();
+  syncEvalSelects();
+}
+
+// ===================== FIN PARAMÈTRES =====================
 var evalSelected = null; // adresse géocodée
 var evalAutocompleteTimer = null;
 var evalListingId = null; // si lié à une annonce
@@ -2547,15 +2717,18 @@ function evalGetAdjustments() {
   var total = 0;
   var details = [];
   var fields = [
-    {id:'eval-etage',    label:'Étage'},
-    {id:'eval-vue',      label:'Vue'},
-    {id:'eval-bruit',    label:'Bruit'},
-    {id:'eval-etat',     label:'État'},
-    {id:'eval-exterieur',label:'Extérieur'},
-    {id:'eval-dpe',      label:'DPE'},
+    {id:'eval-etage',      label:'Étage'},
+    {id:'eval-vue',        label:'Vue / orientation'},
+    {id:'eval-bruit',      label:'Bruit'},
+    {id:'eval-etat',       label:'État'},
+    {id:'eval-exterieur',  label:'Extérieur'},
+    {id:'eval-dpe',        label:'DPE'},
+    {id:'eval-luminosite', label:'Luminosité'},
+    {id:'eval-plafond',    label:'Hauteur sous plafond'},
   ];
   fields.forEach(function(f) {
     var el = document.getElementById(f.id);
+    if (!el) return;
     var val = parseFloat(el.value) || 0;
     if (val !== 0) {
       total += val;
