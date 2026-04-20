@@ -2310,51 +2310,6 @@ var DVF_SECTIONS_75117 = [
 var dvfRawExact = [], dvfRawStreet = [];
 var dvfSortState = {col:'date', dir:-1};
 
-function dvfProcessResults(all, codeVoie, nomVoie, sel) {
-  var exact = [], street = [];
-  var numStr = (sel.housenumber || '').toString().trim();
-  // Dédoublonner par id_mutation : garder Appartement/Maison en priorité
-  var byMutation = {};
-  all.forEach(function(item) {
-    (item.mutations || []).forEach(function(m) {
-      if (m.nature_mutation !== 'Vente') return;
-      // Exclure uniquement les terrains non bâtis (pas de surface bâtie)
-      if (!m.surface_reelle_bati || parseFloat(m.surface_reelle_bati) === 0) return;
-      var mVoie = (m.adresse_nom_voie || '').toUpperCase();
-      var mCode = (m.adresse_code_voie || '').toString();
-      // Correspondance souple : code voie exact OU nom de voie avec mot-clé principal
-      // Extraire le mot principal de la voie (ignorer RUE, AV, BD, DE, LA, LE, LES...)
-      var stopWords = /^(RUE|AVENUE|AV|BOULEVARD|BD|IMPASSE|ALLEE|PLACE|CHEMIN|ROUTE|DE|DU|LA|LE|LES|D|L|DES|EN|ET|SUR|ST|SAINT|GRANDE|PETIT|PETITE)$/;
-      var nomMots = nomVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
-      var mVoieMots = mVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
-      var matchCode = codeVoie && mCode === codeVoie;
-      var matchNom = nomMots.length > 0 && nomMots.every(function(mot){ return mVoieMots.indexOf(mot) >= 0; });
-      var matchVoie = matchCode || matchNom;
-      if (!matchVoie) return;
-      var mid = m.id_mutation || (m.date_mutation + '_' + m.valeur_fonciere);
-      var tl = m.type_local || '';
-      // Priorité : Appartement > Maison > reste
-      var prev = byMutation[mid];
-      if (!prev) { byMutation[mid] = m; }
-      else if (tl === 'Appartement') { byMutation[mid] = m; }
-      else if (tl === 'Maison' && prev.type_local !== 'Appartement') { byMutation[mid] = m; }
-    });
-  });
-  Object.keys(byMutation).forEach(function(mid) {
-    var m = byMutation[mid];
-    var mNum = (m.adresse_numero || '').toString().replace('.0','').trim();
-    if (numStr && mNum === numStr) exact.push(m);
-    else street.push(m);
-  });
-  dvfRawExact  = exact;
-  dvfRawStreet = street;
-  dvfSortState = {col:'date', dir:-1};
-  document.getElementById('dvf-loading').style.display = 'none';
-  document.getElementById('dvf-results').style.display = 'block';
-  document.getElementById('dvf-street-label').textContent = sel.street ? '\u2014 ' + sel.street : '';
-  renderDvfTable('dvf-exact-table',  'dvf-exact-count',  dvfRawExact,  true);
-  renderDvfTable('dvf-street-table', 'dvf-street-count', dvfRawStreet, false);
-}
 
 function dvfSortBy(col, tableId, countId, isExact) {
   if (dvfSortState.col === col) {
@@ -2463,19 +2418,53 @@ function dvfFetch() {
     '\uD83D\uDCCD <strong>'+sel.label+'</strong>'
     +' <span style="color:#aaa;font-size:11px">'+sel.lat.toFixed(5)+', '+sel.lon.toFixed(5)+'</span>';
 
-  var codeCommune = sel.citycode || '75117';
-  var banId = sel.id || '';
-  // id BAN format: "75117_1550_00024" → code voie = 2ème segment
-  var parts = banId.split('_');
-  var codeVoie = parts.length >= 2 ? parts[1] : '';
-  var nomVoie  = (sel.street || '').toUpperCase();
+  var codePostal = sel.postcode || '';
+  var nomVoie    = (sel.street || '').toUpperCase();
 
-  fetch(WORKER_URL+'/api/dvf?commune='+codeCommune, {
+  // Construire l'URL DVF avec code_postal + nom_voie
+  var params = 'code_postal=' + encodeURIComponent(codePostal);
+  if (nomVoie) params += '&nom_voie=' + encodeURIComponent(nomVoie);
+
+  fetch(WORKER_URL+'/api/dvf?'+params, {
     headers:{'Authorization':'Bearer '+getToken()}
-  }).then(function(r){return r.json();}).then(function(results){
-    try { dvfProcessResults(results, codeVoie, nomVoie, sel); }
+  }).then(function(r){return r.json();}).then(function(mutations){
+    try {
+      if (mutations.error) { showDvfError(mutations.error); return; }
+      dvfProcessResults(mutations, sel);
+    }
     catch(e) { showDvfError('Erreur traitement : '+e); }
   }).catch(function(e){ showDvfError('Erreur DVF : '+e); });
+}
+
+function dvfProcessResults(mutations, sel) {
+  var numStr = (sel.housenumber || '').toString().trim();
+  var nomVoie = (sel.street || '').toUpperCase();
+
+  // Extraire mots significatifs du nom de voie pour matching souple
+  var stopWords = /^(RUE|AVENUE|AV|BOULEVARD|BD|IMPASSE|ALLEE|PLACE|CHEMIN|ROUTE|DE|DU|LA|LE|LES|D|L|DES|EN|ET|SUR|ST|SAINT)$/;
+  var nomMots = nomVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
+
+  var exact = [], street = [];
+  mutations.forEach(function(m) {
+    if (!m.valeur_fonciere || !m.surface_reelle_bati) return;
+    // Vérifier que c'est bien la bonne rue (le filtre ilike peut être large)
+    var mVoie = (m.adresse_nom_voie || '').toUpperCase();
+    var mVoieMots = mVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
+    var matchNom = nomMots.length === 0 || nomMots.every(function(mot){ return mVoieMots.indexOf(mot) >= 0; });
+    if (!matchNom) return;
+    var mNum = (m.adresse_numero || '').toString().replace('.0','').trim();
+    if (numStr && mNum === numStr) exact.push(m);
+    else street.push(m);
+  });
+
+  dvfRawExact  = exact;
+  dvfRawStreet = street;
+  dvfSortState = {col:'date', dir:-1};
+  document.getElementById('dvf-loading').style.display = 'none';
+  document.getElementById('dvf-results').style.display = 'block';
+  document.getElementById('dvf-street-label').textContent = sel.street ? '\u2014 ' + sel.street : '';
+  renderDvfTable('dvf-exact-table',  'dvf-exact-count',  dvfRawExact,  true);
+  renderDvfTable('dvf-street-table', 'dvf-street-count', dvfRawStreet, false);
 }
 
 function showDvfError(msg) {
@@ -2575,6 +2564,25 @@ document.addEventListener('click', function(e) {
 
 
 <script>
+async function testTabularAPI() {
+  var log = document.getElementById('dvf-debug-log');
+  log.textContent = 'Test API tabulaire data.gouv.fr...
+';
+  // DVF géolocalisées - resource ID connu
+  var url = 'https://tabular-api.data.gouv.fr/api/resources/90a98de0-f562-4328-aa16-fe0dd1dca60f/data/?code_postal__exact=75008&adresse_nom_voie__contains=LISBONNE&page_size=5';
+  try {
+    var r = await fetch(url);
+    log.textContent += 'Status: ' + r.status + '
+';
+    var d = await r.json();
+    log.textContent += JSON.stringify(d).substring(0, 800) + '
+';
+  } catch(e) {
+    log.textContent += 'Erreur: ' + e + '
+';
+  }
+}
+
 async function testDVFDebug() {
   var log = document.getElementById('dvf-debug-log');
   log.textContent = 'Test en cours...\n';
@@ -2616,23 +2624,9 @@ async function testDVFDebug() {
 }
 </script>
 <div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid #FF385C;padding:12px;border-radius:12px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:monospace">
-  <button onclick="testDVFDebug()" style="background:#FF385C;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%;font-size:13px">🔍 Test DVF Debug</button>
+  <button onclick="testDVFDebug()" style="background:#FF385C;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:4px;width:100%;font-size:13px">🔍 Test DVF Debug</button>
+  <button onclick="testTabularAPI()" style="background:#1a6bbf;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%;font-size:13px">🔵 Test API Tabulaire</button>
   <pre id="dvf-debug-log" style="font-size:11px;max-height:280px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333;line-height:1.5"></pre>
 </div>
 
-<script>
-async function testTabularAPI() {
-  var log = document.getElementById('dvf-debug-log');
-  log.textContent = 'Test API tabulaire...\n';
-  var url = 'https://tabular-api.data.gouv.fr/api/resources/90a98de0-f562-4328-aa16-fe0dd1dca60f/data/?code_postal__exact=75008&adresse_nom_voie__contains=LISBONNE&page_size=10';
-  var r = await fetch(url);
-  log.textContent += 'Status: ' + r.status + '\n';
-  var d = await r.json();
-  log.textContent += JSON.stringify(d).substring(0, 800) + '\n';
-}
-</script>
-<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:white;border:2px solid blue;padding:8px;border-radius:8px">
-  <button onclick="testTabularAPI()" style="background:blue;color:white;border:none;padding:8px;border-radius:6px;cursor:pointer">🔵 Test Tabulaire</button>
-</div>
-  
 </body>
