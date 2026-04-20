@@ -27,7 +27,61 @@
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
   --transition: 0.18s ease;
 }
+<script>
+async function testDVFDebug() {
+  var log = document.getElementById('dvf-debug-log');
+  log.textContent = 'Test en cours...\n';
+  
+  // Étape 1 : géocoder
+  var r1 = await fetch(WORKER_URL+'/api/address?q=29+rue+de+Lisbonne+Paris&limit=1', {
+    headers:{'Authorization':'Bearer '+getToken()}
+  });
+  var geo = await r1.json();
+  var f = geo.features && geo.features[0];
+  if (!f) { log.textContent += 'Géocodage échoué\n'; return; }
+  var p = f.properties;
+  log.textContent += 'citycode: ' + p.citycode + '\n';
+  log.textContent += 'id BAN: ' + p.id + '\n';
+  var codeVoie = p.id.split('_')[1];
+  log.textContent += 'codeVoie: ' + codeVoie + '\n\n';
+  
+  // Étape 2 : DVF
+  log.textContent += 'Interrogation DVF commune ' + p.citycode + '...\n';
+  var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+p.citycode, {
+    headers:{'Authorization':'Bearer '+getToken()}
+  });
+  var sections = await r2.json();
+  log.textContent += 'Sections avec mutations: ' + sections.length + '\n';
+  
+  // Étape 3 : filtrer par voie
+  var total = 0;
+  sections.forEach(function(s) {
+    var match = s.mutations.filter(function(m){ return m.adresse_code_voie === codeVoie; });
+    if (match.length > 0) {
+      log.textContent += 'Section ' + s.section + ': ' + match.length + ' transactions\n';
+      total += match.length;
+    }
+  });
+  log.textContent += '\nTotal rue Lisbonne: ' + total + '\n';
+  if (total === 0) {
+    // Afficher les premiers codes voie trouvés pour comparer
+    var voies = {};
+    sections.slice(0,5).forEach(function(s){
+      s.mutations.slice(0,3).forEach(function(m){
+        voies[m.adresse_code_voie] = m.adresse_nom_voie;
+      });
+    });
+    log.textContent += '\nExemples de codes voie dans DVF:\n';
+    Object.keys(voies).slice(0,10).forEach(function(k){ log.textContent += k + ' = ' + voies[k] + '\n'; });
+  }
+}
+</script>
 
+<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid red;padding:12px;border-radius:8px;max-width:400px;">
+  <button onclick="testDVFDebug()" style="background:red;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-bottom:8px;">🔍 Test DVF Debug</button>
+  <pre id="dvf-debug-log" style="font-size:11px;max-height:300px;overflow-y:auto;margin:0;white-space:pre-wrap;"></pre>
+</div>
+  
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--surface-2); color: var(--ink); font-size: 15px; min-width: 320px; -webkit-font-smoothing: antialiased; }
 .app { max-width: 960px; margin: 0 auto; padding: 0 0 80px; }
