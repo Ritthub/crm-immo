@@ -2566,20 +2566,19 @@ document.addEventListener('click', function(e) {
 <script>
 async function testTabularAPI() {
   var log = document.getElementById('dvf-debug-log');
-  log.textContent = 'Test API tabulaire data.gouv.fr...
-';
-  // DVF géolocalisées - resource ID connu
-  var url = 'https://tabular-api.data.gouv.fr/api/resources/90a98de0-f562-4328-aa16-fe0dd1dca60f/data/?code_postal__exact=75008&adresse_nom_voie__contains=LISBONNE&page_size=5';
-  try {
-    var r = await fetch(url);
-    log.textContent += 'Status: ' + r.status + '
-';
-    var d = await r.json();
-    log.textContent += JSON.stringify(d).substring(0, 800) + '
-';
-  } catch(e) {
-    log.textContent += 'Erreur: ' + e + '
-';
+  log.textContent = 'Test endpoints Etalab DVF...\n';
+  var urls = [
+    'https://app.dvf.etalab.gouv.fr/api/sections/75/75108/',
+    'https://app.dvf.etalab.gouv.fr/api/communes/75/',
+  ];
+  for (var i=0; i<urls.length; i++) {
+    try {
+      var r = await fetch(urls[i]);
+      var text = await r.text();
+      log.textContent += '['+r.status+'] '+urls[i].split('/').slice(-3).join('/')+'\n'+text.substring(0,300)+'\n\n';
+    } catch(e) {
+      log.textContent += 'ERREUR: '+e+'\n';
+    }
   }
 }
 
