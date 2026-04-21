@@ -754,6 +754,28 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
       💾 Sauvegarder les paramètres
     </button>
   </div>
+
+  <!-- Diagnostic -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-header" style="margin-bottom:12px">
+      <div class="card-title">🔧 Diagnostic</div>
+    </div>
+    <p style="font-size:13px;color:var(--ink-light);margin-bottom:14px">Testez la connexion au Worker, à Supabase et aux scrapers d'agences.</p>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <button class="btn" onclick="diagRun('worker')" style="font-size:13px;text-align:left;justify-content:flex-start">
+        🌐 Tester la connexion Worker
+      </button>
+      <button class="btn" onclick="diagRun('dvf')" style="font-size:13px;text-align:left;justify-content:flex-start">
+        📊 Tester l'API DVF (Paris 17e)
+      </button>
+      <button class="btn" onclick="diagRun('scraper')" style="font-size:13px;text-align:left;justify-content:flex-start">
+        🔍 Tester les scrapers agences
+      </button>
+    </div>
+
+    <div id="diag-log" style="display:none;background:var(--surface-2);border-radius:10px;padding:14px;font-family:monospace;font-size:12px;line-height:1.7;max-height:320px;overflow-y:auto;white-space:pre-wrap;color:var(--ink)"></div>
+  </div>
 </div>
 
 <!-- MODAL: Nouvelle annonce -->
@@ -2616,7 +2638,86 @@ function renderCriteria(){
   document.getElementById('criteria-display').innerHTML=rows.length?rows.map(function(r){return '<div class="criteria-row"><span class="criteria-key">'+r[0]+'</span><span class="criteria-val">'+r[1]+'</span></div>';}).join(''):'<div style="font-size:13px;color:#aaa;padding:10px 0">Aucun critere defini.</div>';
 }
 
-// ===================== PARAMÈTRES =====================
+// ===================== DIAGNOSTIC =====================
+async function diagRun(type) {
+  var log = document.getElementById('diag-log');
+  log.style.display = 'block';
+  log.textContent = '';
+
+  function print(line) {
+    log.textContent += line + '\n';
+    log.scrollTop = log.scrollHeight;
+  }
+
+  if (type === 'worker') {
+    print('🌐 Test connexion Worker...');
+    try {
+      var t0 = Date.now();
+      var r = await fetch(WORKER_URL + '/api/auth/me', {headers: {'Authorization': 'Bearer ' + getToken()}});
+      var d = await r.json();
+      print('Status : ' + r.status + ' (' + (Date.now()-t0) + 'ms)');
+      print(d.email ? '✅ Connecté en tant que : ' + d.email : '⚠️ ' + JSON.stringify(d));
+    } catch(e) { print('❌ Erreur : ' + e); }
+  }
+
+  if (type === 'dvf') {
+    print('📊 Test API DVF — Paris 17e (75017)...');
+    try {
+      var t0 = Date.now();
+      var r = await fetch(WORKER_URL + '/api/dvf?code_postal=75017', {headers: {'Authorization': 'Bearer ' + getToken()}});
+      var d = await r.json();
+      print('Status : ' + r.status + ' (' + (Date.now()-t0) + 'ms)');
+      if (d.error) { print('❌ ' + d.error); return; }
+      print('✅ ' + d.length + ' transactions trouvées');
+      if (d.length > 0) {
+        print('Exemple : ' + d[0].adresse_nom_voie + ' — ' + parseInt(d[0].valeur_fonciere).toLocaleString('fr-FR') + ' € (' + d[0].date_mutation + ')');
+      }
+    } catch(e) { print('❌ Erreur : ' + e); }
+
+    print('');
+    print('📊 Test Eval DVF — 75m² Paris 8e...');
+    try {
+      var t0 = Date.now();
+      var r = await fetch(WORKER_URL + '/api/eval-dvf?code_postal=75008&code_commune=75108&surface=75', {headers: {'Authorization': 'Bearer ' + getToken()}});
+      var d = await r.json();
+      print('Status : ' + r.status + ' (' + (Date.now()-t0) + 'ms)');
+      if (d.error) { print('❌ ' + d.error); return; }
+      print('✅ ' + d.nb_comparables + ' comparables — Médiane : ' + d.mediane_pm2.toLocaleString('fr-FR') + ' €/m²');
+      print('Sections interrogées : ' + d.sections_interrogees);
+    } catch(e) { print('❌ Erreur : ' + e); }
+  }
+
+  if (type === 'scraper') {
+    var agences = Object.keys ? ['Leon Immobilier', 'Les Loges Immobilier', 'Authentic Immobilier', 'FREDELION Ternes', 'Maya Invest Immo', 'Obriane Immobilier', 'Saint Ferdinand Immobilier'] : [];
+    print('🔍 Test scrapers agences (' + agences.length + ' agences)...');
+    print('⚠️ Ce test lance de vrais imports — annulez si non souhaité.\n');
+    for (var i = 0; i < agences.length; i++) {
+      var agency = agences[i];
+      print('Testing ' + agency + '...');
+      try {
+        var t0 = Date.now();
+        var r = await fetch(WORKER_URL + '/api/reimport', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken()},
+          body: JSON.stringify({agency: agency, dryRun: true}) // dryRun = ne pas sauvegarder
+        });
+        var d = await r.json();
+        var ms = Date.now() - t0;
+        if (d.error && d.error.indexOf('Pas de scraper') >= 0) {
+          print('  ⚪ Pas de scraper configuré');
+        } else if (d.error) {
+          print('  ❌ ' + d.error + ' (' + ms + 'ms)');
+        } else if (d.ok) {
+          print('  ✅ ' + d.added + ' annonces trouvées (' + ms + 'ms)');
+        } else {
+          print('  ⚠️ ' + (d.message || 'Aucun résultat') + ' (' + ms + 'ms)');
+        }
+      } catch(e) { print('  ❌ ' + e); }
+    }
+    print('\nTest terminé.');
+  }
+}
+// ===================== FIN DIAGNOSTIC =====================
 
 var DEFAULT_SCORING_PARAMS = [
   {key:'etage', label:'Étage', options:[
@@ -3306,69 +3407,7 @@ document.addEventListener('click', function(e) {
 </script>
 
 
-<script>
-async function testTabularAPI() {
-  var log = document.getElementById('dvf-debug-log');
-  log.textContent = 'Test endpoints Etalab DVF...\n';
-  var urls = [
-    'https://app.dvf.etalab.gouv.fr/api/sections/75/75108/',
-    'https://app.dvf.etalab.gouv.fr/api/communes/75/',
-  ];
-  for (var i=0; i<urls.length; i++) {
-    try {
-      var r = await fetch(urls[i]);
-      var text = await r.text();
-      log.textContent += '['+r.status+'] '+urls[i].split('/').slice(-3).join('/')+'\n'+text.substring(0,300)+'\n\n';
-    } catch(e) {
-      log.textContent += 'ERREUR: '+e+'\n';
-    }
-  }
-}
 
-async function testDVFDebug() {
-  var log = document.getElementById('dvf-debug-log');
-  log.textContent = 'Test en cours...\n';
-  var r1 = await fetch(WORKER_URL+'/api/address?q=29+rue+de+Lisbonne+Paris&limit=1', {headers:{'Authorization':'Bearer '+getToken()}});
-  var geo = await r1.json();
-  var f = geo.features && geo.features[0];
-  if (!f) { log.textContent += 'Géocodage échoué\n'; return; }
-  var p = f.properties;
-  var codeVoie = p.id.split('_')[1];
-  log.textContent += 'citycode BAN: ' + p.citycode + '\n';
-  log.textContent += 'codeVoie BAN: ' + codeVoie + '\n\n';
 
-  // Tester avec 75108 ET 75056
-  var communes = [p.citycode, '75056'];
-  for (var ci = 0; ci < communes.length; ci++) {
-    var commune = communes[ci];
-    log.textContent += '--- Test commune ' + commune + ' ---\n';
-    var r2 = await fetch(WORKER_URL+'/api/dvf?commune='+commune, {headers:{'Authorization':'Bearer '+getToken()}});
-    var sections = await r2.json();
-    log.textContent += 'Sections: ' + sections.length + '\n';
-    var lisbonne = [];
-    sections.forEach(function(s) {
-      s.mutations.forEach(function(m) {
-        if ((m.adresse_nom_voie||'').toUpperCase().indexOf('LISBONNE') >= 0) {
-          if (!lisbonne.some(function(x){return x.code===m.adresse_code_voie;}))
-            lisbonne.push({code: m.adresse_code_voie, nom: m.adresse_nom_voie, count: 0});
-          lisbonne.find(function(x){return x.code===m.adresse_code_voie;}).count++;
-        }
-      });
-    });
-    if (lisbonne.length > 0) {
-      log.textContent += '✅ Lisbonne trouvée!\n';
-      lisbonne.forEach(function(v){ log.textContent += '  code='+v.code+' nom='+v.nom+' ('+v.count+' transactions)\n'; });
-    } else {
-      log.textContent += '❌ Lisbonne absente\n';
-    }
-    log.textContent += '\n';
-  }
-}
-</script>
-<div style="position:fixed;bottom:10px;right:10px;z-index:9999;background:white;border:2px solid #FF385C;padding:12px;border-radius:12px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:monospace">
-  <button onclick="testDVFDebug()" style="background:#FF385C;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:4px;width:100%;font-size:13px">🔍 Test DVF Debug</button>
-  <button onclick="testTabularAPI()" style="background:#1a6bbf;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin-bottom:8px;width:100%;font-size:13px">🔵 Test API Tabulaire</button>
-  <pre id="dvf-debug-log" style="font-size:11px;max-height:280px;overflow-y:auto;margin:0;white-space:pre-wrap;color:#333;line-height:1.5"></pre>
-</div>
 
 </body>
