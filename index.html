@@ -3257,9 +3257,15 @@ function dvfFetch() {
   var codePostal = sel.postcode || '';
   var nomVoie    = (sel.street || '').toUpperCase();
 
-  // Construire l'URL DVF avec code_postal + nom_voie
+  // Extraire le mot distinctif de la voie pour le filtre Supabase
+  // Ex: "Avenue des Ternes" → "TERNES", "Rue de Lisbonne" → "LISBONNE"
+  var stopWords = /^(RUE|AVENUE|AV|BOULEVARD|BD|IMPASSE|ALLEE|PLACE|CHEMIN|ROUTE|DE|DU|LA|LE|LES|D|L|DES|EN|ET|SUR|ST|SAINT|GRANDE|VIEUX|VIEILLE|NOUVEAU|NOUVELLE)$/;
+  var motsCles = nomVoie.split(/\s+/).filter(function(w){ return w.length > 2 && !stopWords.test(w); });
+  var motCle = motsCles[motsCles.length - 1] || ''; // dernier mot significatif (ex: TERNES, LISBONNE)
+
+  // Construire l'URL DVF avec code_postal + mot clé distinctif seulement
   var params = 'code_postal=' + encodeURIComponent(codePostal);
-  if (nomVoie) params += '&nom_voie=' + encodeURIComponent(nomVoie);
+  if (motCle) params += '&nom_voie=' + encodeURIComponent(motCle);
 
   fetch(WORKER_URL+'/api/dvf?'+params, {
     headers:{'Authorization':'Bearer '+getToken()}
