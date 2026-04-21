@@ -3348,8 +3348,9 @@ function renderDvfTable(tableId, countId, mutations, isExact) {
     + '<col style="width:40px">'   /* N° */
     + '<col style="width:50px">'   /* m² */
     + '<col style="width:36px">'   /* Pcs */
-    + '<col style="width:110px">'  /* Prix */
-    + '<col style="width:90px">'   /* €/m² */
+    + '<col style="width:100px">'  /* Prix */
+    + '<col style="width:85px">'   /* €/m² */
+    + '<col style="width:28px">'   /* Lien */
     + '</colgroup>'
     + '<thead><tr style="background:#f8f8f8">'
     + dvfTh('Date', 'date', tableId, countId, isExact)
@@ -3358,6 +3359,7 @@ function renderDvfTable(tableId, countId, mutations, isExact) {
     + dvfTh('Pcs', 'pcs', tableId, countId, isExact, 'right')
     + dvfTh('Prix', 'prix', tableId, countId, isExact, 'right')
     + dvfTh('\u20ac/m\u00b2', 'pm2', tableId, countId, isExact, 'right')
+    + '<th style="padding:7px 4px;text-align:center;font-weight:600;color:#888;font-size:11px"></th>'
     + '</tr></thead><tbody>';
   mutations.forEach(function(m, i) {
     var prix = parseFloat(m.valeur_fonciere) || 0;
@@ -3372,6 +3374,18 @@ function renderDvfTable(tableId, countId, mutations, isExact) {
     else if (tl === 'Maison') tlBadge = ' <span style="font-size:10px;background:#e8f4fd;color:#1a6fa8;border-radius:3px;padding:1px 4px">Maison</span>';
     else if (tl === 'D\u00e9pendance') tlBadge = ' <span style="font-size:10px;background:#f5f5f5;color:#888;border-radius:3px;padding:1px 4px">Dep.</span>';
     else if (tl) tlBadge = ' <span style="font-size:10px;background:#fff3e0;color:#e67700;border-radius:3px;padding:1px 4px" title="'+tl+'">Autre</span>';
+    // Lien vers app.dvf.etalab.gouv.fr centré sur les coordonnées GPS
+    var dvfLink = '';
+    if (m.latitude && m.longitude) {
+      var lat = parseFloat(m.latitude), lon = parseFloat(m.longitude);
+      var dvfUrl = 'https://app.dvf.etalab.gouv.fr/?lat=' + lat.toFixed(6) + '&lon=' + lon.toFixed(6) + '&zoom=18';
+      dvfLink = '<a href="' + dvfUrl + '" target="_blank" title="Voir sur DVF Etalab (source officielle)" style="color:#1a6bbf;text-decoration:none;font-size:14px">🔗</a>';
+    } else {
+      // Fallback : recherche par adresse sur la carte
+      var adr = encodeURIComponent((num ? num + ' ' : '') + (m.adresse_nom_voie || '') + ' ' + (m.code_postal || ''));
+      var dvfUrl = 'https://app.dvf.etalab.gouv.fr/?q=' + adr + '&zoom=17';
+      dvfLink = '<a href="' + dvfUrl + '" target="_blank" title="Voir sur DVF Etalab" style="color:#bbb;text-decoration:none;font-size:14px">🔗</a>';
+    }
     html += '<tr style="background:' + (i%2 ? '#fafafa' : 'white') + '">'
       + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;color:#888;white-space:nowrap">' + date + '</td>'
       + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;white-space:nowrap">' + num + tlBadge + '</td>'
@@ -3379,6 +3393,7 @@ function renderDvfTable(tableId, countId, mutations, isExact) {
       + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right">' + (m.nombre_pieces_principales || '\u2014') + '</td>'
       + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:500;white-space:nowrap">' + prix.toLocaleString('fr-FR') + ' \u20ac</td>'
       + '<td style="padding:7px 6px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:' + c + ';white-space:nowrap">' + (pm2 ? pm2.toLocaleString('fr-FR') + ' \u20ac' : '\u2014') + '</td>'
+      + '<td style="padding:7px 4px;border-bottom:1px solid #f0f0f0;text-align:center">' + dvfLink + '</td>'
       + '</tr>';
   });
   html += '</tbody></table></div>';
